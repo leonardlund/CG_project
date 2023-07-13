@@ -88,15 +88,15 @@ class Assignment07 : public BaseProject {
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
 		M1.init(this, "models/Character.obj");
-		M2.init(this, "models/Character.obj");
+		M2.init(this, "models/doll.obj");
 		MG.init(this, "models/floor.obj");
 		
 		T1.init(this, "textures/Colors2.png");
-		T2.init(this, "textures/Colors2.png");
-		TG[0].init(this, "textures/u5chunkedMap-0.png");
-		TG[1].init(this, "textures/u5chunkedMap-1.png");
-		TG[2].init(this, "textures/u5chunkedMap-2.png");
-		TG[3].init(this, "textures/u5chunkedMap-3.png");
+		T2.init(this, "textures/Material.001_baseColor.png");
+		TG[0].init(this, "textures/None_baseColor.jpeg");
+		TG[1].init(this, "textures/None_baseColor.jpeg");
+		TG[2].init(this, "textures/None_baseColor.jpeg");
+		TG[3].init(this, "textures/None_baseColor.jpeg");
 		
 
 		GWM[0] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(128)),glm::vec3(-1,0,-1));	

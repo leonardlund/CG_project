@@ -45,7 +45,7 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World) 
 	static glm::vec3 Pos = StartingPosition;
 
 	//--- World Matrix ---
-	static float objYaw = 0.0f;
+	static float objYaw = -1.7f;
 	objYaw += ROT_SPEED * r.z * deltaT;
 	objYaw = objYaw > maxYaw ? objYaw - maxYaw : (objYaw < minYaw 
 		? objYaw + maxYaw : objYaw); // avoid overflows
