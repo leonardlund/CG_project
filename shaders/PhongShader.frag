@@ -41,18 +41,36 @@ vec3 BRDF(vec3 V, vec3 N, vec3 L, vec3 Md, vec3 Ms, float gamma) {
  
 	return fDiffuse+fSpecular;
 }
-
-void main() {
+vec4 lightSky() {
 	vec3 Norm = normalize(fragNorm);
 	vec3 EyeDir = normalize(gubo.eyePos - fragPos);
-	vec3 EyeDirDoll = normalize(gubo.eyePosDoll - fragPos);
 	
 	vec3 lightDir = gubo.lightDir;
 	vec3 lightColor = gubo.lightColor.rgb;
 
 	vec3 DiffSpec = BRDF(EyeDir, Norm, lightDir, texture(tex, fragUV).rgb, vec3(1.0f), 160.0f);
-	vec3 DiffSpecDoll = BRDF(EyeDirDoll, Norm, gubo.lightDirDoll, texture(tex, fragUV).rgb, vec3(1.0f), 160.0f);
 	vec3 Ambient = texture(tex, fragUV).rgb * 0.05f;
 	
-	outColor = vec4(clamp(0.95 * (DiffSpec + DiffSpecDoll) * lightColor.rgb + Ambient,0.0,1.0), 1.0f);
+	vec4 skyColor = vec4(clamp(0.95 * DiffSpec * lightColor.rgb + Ambient,0.0,1.0), 1.0f);
+	
+	return skyColor;
+}
+
+vec4 lightDoll() {
+	vec3 Norm = normalize(fragNorm);
+	vec3 EyeDir = normalize(gubo.eyePosDoll - fragPos);
+	
+	vec3 lightDir = gubo.lightDirDoll;
+	vec3 lightColor = gubo.lightColorDoll.rgb;
+
+	vec3 DiffSpecDoll = BRDF(EyeDir, Norm, gubo.lightDirDoll, texture(tex, fragUV).rgb, vec3(1.0f), 160.0f);
+	vec3 Ambient = texture(tex, fragUV).rgb * 0.05f;
+	
+	vec4 dollColor = vec4(clamp(0.95 * DiffSpecDoll * lightColor.rgb + Ambient,0.0,1.0), 1.0f);
+	return dollColor;
+}
+
+void main() {
+	
+	outColor = lightSky() + lightDoll();
 }
