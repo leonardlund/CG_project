@@ -14,11 +14,11 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World) 
 	const float farPlane = 100.f;
 
 	// Player starting point
-	const glm::vec3 StartingPosition = glm::vec3(-41.50, 0.0, -19.5);
+	const glm::vec3 StartingPosition = glm::vec3(-20, 0.0, -10);
 
 	// Camera target height and distance
-	const float camHeight = 0.25;
-	const float camDist = 1.5;
+	const float camHeight = 0.50;
+	const float camDist = 2;
 	// Camera Pitch limits
 	const float minPitch = glm::radians(-8.75f);
 	const float maxPitch = glm::radians(60.0f);
@@ -60,17 +60,18 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World) 
 	World = glm::translate(glm::mat4(1.0), Pos) *
 		glm::mat4(glm::quat(glm::vec3(0,objYaw,0)));
 
-
+	
 	//--- View-Projection Matrix ---
-	static float camYaw = 0.0f;
+	static float camYaw = 1.5f;
 	static float camPitch = 0.0f;
 	const float DAMPING = 10.0f;
 
 	camPitch += ROT_SPEED * r.x * deltaT;
 	camPitch = camPitch < minPitch ? minPitch : (camPitch > maxPitch ? maxPitch : camPitch); 
+	camYaw = -objYaw;
+	//camYaw += ROT_SPEED * r.y * deltaT;
+	//camYaw = camYaw > maxYaw ? camYaw - maxYaw : (camYaw < minYaw ? camYaw + maxYaw : camYaw);
 
-	camYaw += ROT_SPEED * r.y * deltaT;
-	camYaw = camYaw > maxYaw ? camYaw - maxYaw : (camYaw < minYaw ? camYaw + maxYaw : camYaw);
 
 	const glm::vec3 CAMBASE = glm::vec3(0, camHeight, camDist);
 	glm::quat cameraDirection = glm::quat(glm::vec3(camPitch, -camYaw, 0));
@@ -87,6 +88,11 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World) 
 	glm::mat4 Proj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
 	Proj[1][1] *= -1;
 
+
 	ViewPrj = Proj * View;
 	//-------------------------------
+	if (Pos.x > 0) {
+		std::cout << "STOOOOP" << std::endl;
+	}
+
 }
