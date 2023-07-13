@@ -1,1 +1,6 @@
 .vs/
+x64/Debug/
+CGproject.sln
+CGproject.vcxproj
+CGproject.vcxproj.filters
+CGproject.vcxproj.user
