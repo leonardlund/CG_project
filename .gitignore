@@ -1,6 +1,12 @@
-.vs/
-x64/Debug/
+.vs
+x64
+
 CGproject.sln
 CGproject.vcxproj
 CGproject.vcxproj.filters
 CGproject.vcxproj.user
+
+CG_project.sln
+CG_project.vcxproj
+CG_project.vcxproj.filters
+CG_project.vcxproj.user
