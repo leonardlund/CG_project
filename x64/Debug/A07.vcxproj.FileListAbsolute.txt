@@ -1,0 +1,2 @@
+C:\Users\Leonard\Desktop\PoliMi\Computer Graphics\Assignments\A07\x64\Debug\A07.exe
+C:\Users\Leonard\git-projects\CG_project\x64\Debug\A07.exe
