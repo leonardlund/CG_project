@@ -40,19 +40,19 @@ class Assignment07 : public BaseProject {
 	// Here you list all the Vulkan objects you need:
 	
 	// Descriptor Layouts [what will be passed to the shaders]
-	DescriptorSetLayout DSL1;
+	DescriptorSetLayout DSLMesh, DSLGenerated;
 
 	// Vertex formats
 	VertexDescriptor VMesh, VGenerated;
 
 	// Pipelines [Shader couples]
-	Pipeline P1;
+	Pipeline PMesh, PGenerated;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	Model<VertexMesh> M1, M2, MG;
 	Model<VertexGenerated> ModelRedLine;
 	Texture T1, T2, TG[4];
-	DescriptorSet DS1, DS2, DSG[4];
+	DescriptorSet DS1, DS2, DSG[4], DSRedLine;
 	
 	// Other application parameters
 	float Ar;
@@ -85,7 +85,7 @@ class Assignment07 : public BaseProject {
 	// Here you also create your Descriptor set layouts and load the shaders for the pipelines
 	void localInit() {
 		// Descriptor Layouts [what will be passed to the shaders]
-		DSL1.init(this, {
+		DSLMesh.init(this, {
 					// this array contains the binding:
 					// first  element : the binding number
 					// second element : the type of element (buffer or texture)
@@ -146,8 +146,8 @@ class Assignment07 : public BaseProject {
 		// Pipelines [Shader couples]
 		// The last array, is a vector of pointer to the layouts of the sets that will
 		// be used in this pipeline. The first element will be set 0, and so on..
-		P1.init(this, &VMesh, "shaders/PhongVert.spv", "shaders/PhongFrag.spv", {&DSL1});
-		P1.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL,
+		PMesh.init(this, &VMesh, "shaders/PhongVert.spv", "shaders/PhongFrag.spv", {&DSLMesh});
+		PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL,
  								    VK_CULL_MODE_NONE, false);
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
@@ -172,20 +172,20 @@ class Assignment07 : public BaseProject {
 	// Here you create your pipelines and Descriptor Sets!
 	void pipelinesAndDescriptorSetsInit() {
 		// This creates a new pipeline (with the current surface), using its shaders
-		P1.create();
+		PMesh.create();
 
-		DS1.init(this, &DSL1, {
+		DS1.init(this, &DSLMesh, {
 					{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
 					{1, TEXTURE, 0, &T1},
 					{2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
 				});
-		DS2.init(this, &DSL1, {
+		DS2.init(this, &DSLMesh, {
 					{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
 					{1, TEXTURE, 0, &T2},
 					{2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
 			});
 		for(int i = 0; i < 4; i++) {
-			DSG[i].init(this, &DSL1, {
+			DSG[i].init(this, &DSLMesh, {
 					{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
 					{1, TEXTURE, 0, &TG[i]},
 					{2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
@@ -195,7 +195,7 @@ class Assignment07 : public BaseProject {
 
 	// Here you destroy your pipelines and Descriptor Sets!
 	void pipelinesAndDescriptorSetsCleanup() {
-		P1.cleanup();
+		PMesh.cleanup();
 		
 		DS1.cleanup();
 		DS2.cleanup();
@@ -218,9 +218,9 @@ class Assignment07 : public BaseProject {
 		TG[3].cleanup();
 		MG.cleanup();
 
-		DSL1.cleanup();
+		DSLMesh.cleanup();
 		
-		P1.destroy();		
+		PMesh.destroy();		
 	}
 	
 	// Here it is the creation of the command buffer:
@@ -228,10 +228,10 @@ class Assignment07 : public BaseProject {
 	// with their buffers and textures
 	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
 
-		P1.bind(commandBuffer);
+		PMesh.bind(commandBuffer);
 		M1.bind(commandBuffer);
 		
-		DS1.bind(commandBuffer, P1, 0, currentImage);
+		DS1.bind(commandBuffer, PMesh, 0, currentImage);
 		
 					
 		vkCmdDrawIndexed(commandBuffer,
@@ -239,14 +239,14 @@ class Assignment07 : public BaseProject {
 		
 		/* Leo addition */
 		M2.bind(commandBuffer);
-		DS2.bind(commandBuffer, P1, 0, currentImage);
+		DS2.bind(commandBuffer, PMesh, 0, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(M2.indices.size()), 1, 0, 0, 0);
 		/* End Leo addition*/
 
 		MG.bind(commandBuffer);
 		for(int i = 0; i < 4; i++) {
-			DSG[i].bind(commandBuffer, P1, 0, currentImage);
+			DSG[i].bind(commandBuffer, PMesh, 0, currentImage);
 						
 			vkCmdDrawIndexed(commandBuffer,
 					static_cast<uint32_t>(MG.indices.size()), 1, 0, 0, 0);
