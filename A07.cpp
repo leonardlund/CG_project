@@ -19,6 +19,18 @@ struct GlobalUniformBufferObject {
 	alignas(16) glm::vec3 eyePosDoll;
 };
 
+struct VertexGenerated {
+	glm::vec3 pos;
+	glm::vec3 norm;
+	glm::vec3 color;
+};
+
+struct VertexMesh {
+	glm::vec3 pos;
+	glm::vec3 norm;
+	glm::vec2 UV;
+};
+
 class Assignment07;
 void GameLogic(Assignment07 *A, float Ar, glm::mat4 &ViewPrj, glm::mat4 &World, glm::vec3 &ViewPosition);
 
@@ -30,11 +42,15 @@ class Assignment07 : public BaseProject {
 	// Descriptor Layouts [what will be passed to the shaders]
 	DescriptorSetLayout DSL1;
 
+	// Vertex formats
+	VertexDescriptor VMesh, VGenerated;
+
 	// Pipelines [Shader couples]
 	Pipeline P1;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
-	Model M1, M2, MG;
+	Model<VertexMesh> M1, M2, MG;
+	Model<VertexGenerated> ModelRedLine;
 	Texture T1, T2, TG[4];
 	DescriptorSet DS1, DS2, DSG[4];
 	
@@ -79,17 +95,65 @@ class Assignment07 : public BaseProject {
 					{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
 				  });
 
+		VMesh.init(this, {
+			// this array contains the bindings
+			// first  element : the binding number
+			// second element : the stride of this binging
+			// third  element : whether this parameter change per vertex or per instance
+			//                  using the corresponding Vulkan constant
+			{0, sizeof(VertexMesh), VK_VERTEX_INPUT_RATE_VERTEX}
+			}, {
+				// this array contains the location
+				// first  element : the binding number
+				// second element : the location number
+				// third  element : the offset of this element in the memory record
+				// fourth element : the data type of the element
+				//                  using the corresponding Vulkan constant
+				// fifth  elmenet : the size in byte of the element
+				// sixth  element : a constant defining the element usage
+				//                   POSITION - a vec3 with the position
+				//                   NORMAL   - a vec3 with the normal vector
+				//                   UV       - a vec2 with a UV coordinate
+				//                   COLOR    - a vec4 with a RGBA color
+				//                   TANGENT  - a vec4 with the tangent vector
+				//                   OTHER    - anything else
+				//
+				// ***************** DOUBLE CHECK ********************
+				//    That the Vertex data structure you use in the "offsetoff" and
+				//	in the "sizeof" in the previous array, refers to the correct one,
+				//	if you have more than one vertex format!
+				// ***************************************************
+				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, pos),
+					   sizeof(glm::vec3), POSITION},
+				{0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, norm),
+					   sizeof(glm::vec3), NORMAL},
+				{0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexMesh, UV),
+					   sizeof(glm::vec2), UV}
+			});
+
+		VGenerated.init(this, {
+			{0, sizeof(VertexGenerated), VK_VERTEX_INPUT_RATE_VERTEX}
+			}, {
+				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, pos),
+					   sizeof(glm::vec3), POSITION},
+				{0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, norm),
+					   sizeof(glm::vec3), NORMAL},
+				{0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, color),
+					   sizeof(glm::vec3), COLOR}
+			});
+
+
 		// Pipelines [Shader couples]
 		// The last array, is a vector of pointer to the layouts of the sets that will
 		// be used in this pipeline. The first element will be set 0, and so on..
-		P1.init(this, "shaders/PhongVert.spv", "shaders/PhongFrag.spv", {&DSL1});
+		P1.init(this, &VMesh, "shaders/PhongVert.spv", "shaders/PhongFrag.spv", {&DSL1});
 		P1.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL,
  								    VK_CULL_MODE_NONE, false);
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
-		M1.init(this, "models/Character.obj");
-		M2.init(this, "models/doll.obj");
-		MG.init(this, "models/floor.obj");
+		M1.init(this, &VMesh, "models/Character.obj", OBJ);
+		M2.init(this, &VMesh, "models/doll.obj", OBJ);
+		MG.init(this, &VMesh, "models/floor.obj", OBJ);
 		
 		T1.init(this, "textures/Colors2.png");
 		T2.init(this, "textures/Material.001_baseColor.png");
@@ -167,7 +231,7 @@ class Assignment07 : public BaseProject {
 		P1.bind(commandBuffer);
 		M1.bind(commandBuffer);
 		
-		DS1.bind(commandBuffer, P1, currentImage);
+		DS1.bind(commandBuffer, P1, 0, currentImage);
 		
 					
 		vkCmdDrawIndexed(commandBuffer,
@@ -175,14 +239,14 @@ class Assignment07 : public BaseProject {
 		
 		/* Leo addition */
 		M2.bind(commandBuffer);
-		DS2.bind(commandBuffer, P1, currentImage);
+		DS2.bind(commandBuffer, P1, 0, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(M2.indices.size()), 1, 0, 0, 0);
 		/* End Leo addition*/
 
 		MG.bind(commandBuffer);
 		for(int i = 0; i < 4; i++) {
-			DSG[i].bind(commandBuffer, P1, currentImage);
+			DSG[i].bind(commandBuffer, P1, 0, currentImage);
 						
 			vkCmdDrawIndexed(commandBuffer,
 					static_cast<uint32_t>(MG.indices.size()), 1, 0, 0, 0);
