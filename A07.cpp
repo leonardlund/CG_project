@@ -11,7 +11,7 @@ struct UniformBufferObject {
 };
 
 struct GlobalUniformBufferObject {
-	alignas(16) glm::vec3 lightDir;
+	alignas(16) glm::vec3 lightPosition;
 	alignas(16) glm::vec4 lightColor;
 	alignas(16) glm::vec3 eyePos;
 	alignas(16) glm::vec3 lightDirDoll;
@@ -32,7 +32,7 @@ struct VertexMesh {
 };
 
 class Assignment07;
-void GameLogic(Assignment07 *A, float Ar, glm::mat4 &ViewPrj, glm::mat4 &World, glm::vec3 &ViewPosition);
+void GameLogic(Assignment07 *A, float Ar, glm::mat4 &ViewPrj, glm::mat4 &World, glm::vec3 &ViewPosition, float &dollAngle);
 
 // MAIN ! 
 class Assignment07 : public BaseProject {
@@ -263,38 +263,40 @@ class Assignment07 : public BaseProject {
 		glm::mat4 ViewPrj;
 		glm::mat4 WM;
 		glm::vec3 ViewPosition;
+		float dollAngle;
 		
-		GameLogic(this, Ar, ViewPrj, WM, ViewPosition);
+		GameLogic(this, Ar, ViewPrj, WM, ViewPosition, dollAngle);
 		
+		glm::quat dollRotationQuaternion = glm::quat(glm::vec3(0, dollAngle, 0));
 
 		UniformBufferObject ubo{};								
 		// Here is where you actually update your uniforms
 
 		// updates global uniforms
 		GlobalUniformBufferObject gubo{};
-		//gubo.lightDir = glm::vec3(cos(glm::radians(135.0f)), sin(glm::radians(135.0f)), 0.0f);
-		gubo.lightDir = glm::vec3(100.0f, 100.0f, 100.0f);
+		//gubo.lightPosition= glm::vec3(cos(glm::radians(135.0f)), sin(glm::radians(135.0f)), 0.0f);
+		gubo.lightPosition = glm::vec3(100.0f, 100.0f, 100.0f);
 		gubo.lightColor = glm::vec4(0.5f, 0.5f, 1.0f, 1.0f);
 		gubo.eyePos = ViewPosition;
 		/* Leo addition */
-		gubo.lightDirDoll = glm::vec3(1, 0, 1);
+		gubo.lightDirDoll = glm::vec3(sin(dollAngle), -sin(glm::radians(-30.0f)), cos(dollAngle));
 		gubo.lightColorDoll = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
 		gubo.eyePosDoll = glm::vec3(0, 1, 0);
 		/* End Leo addition */
 
+		// CHARACTER UBO
 		ubo.mMat = WM * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0,1,0));
 		ubo.mvpMat = ViewPrj * ubo.mMat;
 		ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
 		DS1.map(currentImage, &ubo, sizeof(ubo), 0);
 		DS1.map(currentImage, &gubo, sizeof(gubo), 2);
 
-		/* Leo addition */
-		ubo.mMat = glm::translate(glm::scale(glm::mat4(1), glm::vec3(2)), glm::vec3(0, 0, 0));
+		// DOLL UBO
+		ubo.mMat = glm::translate(glm::scale(glm::mat4(1), glm::vec3(2)), glm::vec3(0, 0, 0)) * glm::mat4(dollRotationQuaternion);
 		ubo.mvpMat = ViewPrj * ubo.mMat;
 		ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
 		DS2.map(currentImage, &ubo, sizeof(ubo), 0);
 		DS2.map(currentImage, &gubo, sizeof(gubo), 2);
-		/* End Leo addition */
 
 		for(int i = 0; i < 4; i++) {
 			ubo.mMat = GWM[i];

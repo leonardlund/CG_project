@@ -1,5 +1,5 @@
 
-void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, glm::vec3& ViewPosition) {
+void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, glm::vec3& ViewPosition, float& dollAngle) {
 	// The procedure must implement the game logic  to move the character in third person.
 	// Input:
 	// <Assignment07 *A> Pointer to the current assignment code. Required to read the input from the user
@@ -91,6 +91,15 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 
 
 	ViewPrj = Proj * View;
+
+	// ----- DOLL rotation ---------
+	static float dolldirection = 0;
+	const float dollSpeed = glm::radians(80.0f);
+	dolldirection += deltaT * dollSpeed;
+	dollAngle = dolldirection;
+
+
+
 	//-------------------------------
 	if (Pos.x > 0) {
 		std::cout << "STOOOOP" << std::endl;
