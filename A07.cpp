@@ -20,7 +20,7 @@ struct GlobalUniformBufferObject {
 };
 
 class Assignment07;
-void GameLogic(Assignment07 *A, float Ar, glm::mat4 &ViewPrj, glm::mat4 &World);
+void GameLogic(Assignment07 *A, float Ar, glm::mat4 &ViewPrj, glm::mat4 &World, glm::vec3 &ViewPosition);
 
 // MAIN ! 
 class Assignment07 : public BaseProject {
@@ -198,8 +198,9 @@ class Assignment07 : public BaseProject {
 
 		glm::mat4 ViewPrj;
 		glm::mat4 WM;
+		glm::vec3 ViewPosition;
 		
-		GameLogic(this, Ar, ViewPrj, WM);
+		GameLogic(this, Ar, ViewPrj, WM, ViewPosition);
 		
 
 		UniformBufferObject ubo{};								
@@ -207,13 +208,15 @@ class Assignment07 : public BaseProject {
 
 		// updates global uniforms
 		GlobalUniformBufferObject gubo{};
-		gubo.lightDir = glm::vec3(cos(glm::radians(135.0f)), sin(glm::radians(135.0f)), 0.0f);
-		gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-		gubo.eyePos = glm::vec3(100.0, 100.0, 100.0);
-		gubo.lightDirDoll = glm::vec3(1, 0, 0);
+		//gubo.lightDir = glm::vec3(cos(glm::radians(135.0f)), sin(glm::radians(135.0f)), 0.0f);
+		gubo.lightDir = glm::vec3(100.0f, 100.0f, 100.0f);
+		gubo.lightColor = glm::vec4(0.5f, 0.5f, 1.0f, 1.0f);
+		gubo.eyePos = ViewPosition;
+		/* Leo addition */
+		gubo.lightDirDoll = glm::vec3(1, 0, 1);
 		gubo.lightColorDoll = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
 		gubo.eyePosDoll = glm::vec3(0, 1, 0);
-
+		/* End Leo addition */
 
 		ubo.mMat = WM * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0,1,0));
 		ubo.mvpMat = ViewPrj * ubo.mMat;
@@ -222,7 +225,7 @@ class Assignment07 : public BaseProject {
 		DS1.map(currentImage, &gubo, sizeof(gubo), 2);
 
 		/* Leo addition */
-		ubo.mMat = glm::translate(glm::scale(glm::mat4(1), glm::vec3(10)), glm::vec3(0, 0, 0));
+		ubo.mMat = glm::translate(glm::scale(glm::mat4(1), glm::vec3(2)), glm::vec3(0, 0, 0));
 		ubo.mvpMat = ViewPrj * ubo.mMat;
 		ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
 		DS2.map(currentImage, &ubo, sizeof(ubo), 0);

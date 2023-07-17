@@ -1,5 +1,5 @@
 
-void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World) {
+void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, glm::vec3& ViewPosition) {
 	// The procedure must implement the game logic  to move the character in third person.
 	// Input:
 	// <Assignment07 *A> Pointer to the current assignment code. Required to read the input from the user
@@ -17,7 +17,7 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World) 
 	const glm::vec3 StartingPosition = glm::vec3(-20, 0.0, -10);
 
 	// Camera target height and distance
-	const float camHeight = 0.50;
+	const float camHeight = 1;
 	const float camDist = 2;
 	// Camera Pitch limits
 	const float minPitch = glm::radians(-8.75f);
@@ -82,6 +82,7 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World) 
 	// Damping
 	glm::vec3 cam = oldCam * exp(-DAMPING * deltaT) + newCam * (1 - exp(-DAMPING * deltaT));
 	oldCam = cam;
+	ViewPosition = cam;
 
 	glm::vec3 u = glm::vec3(0, 1, 0);
 	glm::mat4 View = glm::lookAt(cam, Pos, u);
