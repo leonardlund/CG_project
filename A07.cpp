@@ -3,6 +3,7 @@
 #include "Starter.hpp"
 
 
+
 // The uniform buffer object used in this example
 struct UniformBufferObject {
 	alignas(16) glm::mat4 mvpMat;
@@ -51,7 +52,7 @@ class Assignment07 : public BaseProject {
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	Model<VertexMesh> M1, M2, MG;
 	Model<VertexGenerated> ModelRedLine;
-	Texture T1, T2, TG[4];
+	Texture T1, T2, TG[4], TRedLine;
 	DescriptorSet DS1, DS2, DSG[4], DSRedLine;
 	
 	// Other application parameters
@@ -94,6 +95,16 @@ class Assignment07 : public BaseProject {
 					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
 					{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
 				  });
+
+		DSLGenerated.init(this, {
+			// this array contains the binding:
+			// first  element : the binding number
+			// second element : the type of element (buffer or texture)
+			// third  element : the pipeline stage where it will be used
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+			{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
+			});
 
 		VMesh.init(this, {
 			// this array contains the bindings
@@ -149,11 +160,17 @@ class Assignment07 : public BaseProject {
 		PMesh.init(this, &VMesh, "shaders/PhongVert.spv", "shaders/PhongFrag.spv", {&DSLMesh});
 		PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL,
  								    VK_CULL_MODE_NONE, false);
+		PGenerated.init(this, &VGenerated, "shaders/PhongVert.spv", "shaders/PhongFrag.spv", { &DSLGenerated });
+		// PGenerated.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL,
+		//	VK_CULL_MODE_NONE, false);
+
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
 		M1.init(this, &VMesh, "models/Character.obj", OBJ);
 		M2.init(this, &VMesh, "models/doll.obj", OBJ);
 		MG.init(this, &VMesh, "models/floor.obj", OBJ);
+		createRedLineMesh(ModelRedLine.vertices, ModelRedLine.indices);
+		ModelRedLine.initMesh(this, &VGenerated);
 		
 		T1.init(this, "textures/Colors2.png");
 		T2.init(this, "textures/Material.001_baseColor.png");
@@ -173,6 +190,8 @@ class Assignment07 : public BaseProject {
 	void pipelinesAndDescriptorSetsInit() {
 		// This creates a new pipeline (with the current surface), using its shaders
 		PMesh.create();
+		PGenerated.create();
+
 
 		DS1.init(this, &DSLMesh, {
 					{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
@@ -191,11 +210,17 @@ class Assignment07 : public BaseProject {
 					{2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
 				});
 		}
+		DSRedLine.init(this, &DSLGenerated, {
+					{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
+					{2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
+			});
 	}
 
 	// Here you destroy your pipelines and Descriptor Sets!
 	void pipelinesAndDescriptorSetsCleanup() {
 		PMesh.cleanup();
+		PGenerated.cleanup();
+
 		
 		DS1.cleanup();
 		DS2.cleanup();
@@ -212,6 +237,7 @@ class Assignment07 : public BaseProject {
 		T2.cleanup();
 		M1.cleanup();
 		M2.cleanup();
+		ModelRedLine.cleanup();
 		TG[0].cleanup();
 		TG[1].cleanup();
 		TG[2].cleanup();
@@ -219,8 +245,10 @@ class Assignment07 : public BaseProject {
 		MG.cleanup();
 
 		DSLMesh.cleanup();
+		DSLGenerated.cleanup();
 		
 		PMesh.destroy();		
+		PGenerated.destroy();
 	}
 	
 	// Here it is the creation of the command buffer:
@@ -229,6 +257,8 @@ class Assignment07 : public BaseProject {
 	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
 
 		PMesh.bind(commandBuffer);
+		PGenerated.bind(commandBuffer);
+
 		M1.bind(commandBuffer);
 		
 		DS1.bind(commandBuffer, PMesh, 0, currentImage);
@@ -304,9 +334,10 @@ class Assignment07 : public BaseProject {
 			DSG[i].map(currentImage, &gubo, sizeof(gubo), 2);
 		}
 	}
-	
-};
+	void createRedLineMesh(std::vector<VertexGenerated> &vDef, std::vector<uint32_t> &vIdx);
 
+};
+#include "primGen.hpp"
 #include "Logic.hpp"
 
 // This is the main: probably you do not need to touch this!
