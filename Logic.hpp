@@ -98,6 +98,21 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 	dolldirection += deltaT * dollSpeed;
 	dollAngle = dolldirection;
 
+	float epsilon = glm::radians(10.0f);
+
+	glm::vec3 firstVector = glm::vec3(cos(dolldirection + epsilon), 0, sin(dolldirection + epsilon));
+	glm::vec3 secondVector = glm::vec3(cos(dolldirection - epsilon), 0, sin(dolldirection - epsilon));
+	
+	glm::vec3 firstNormal = glm::normalize(glm::cross(firstVector, glm::vec3(0, 1, 0)));
+	glm::vec3 secondNormal = glm::normalize(glm::cross(secondVector, glm::vec3(0, 1, 0)));
+
+	float firstCheck = glm::dot(firstNormal, Pos);
+	float secondCheck = glm::dot(secondNormal, Pos);
+	glm::vec3 zeroVec = glm::vec3(0.0f);
+
+	if (firstCheck <= 0 && secondCheck >= 0 && (r != zeroVec || m != zeroVec)) {
+		std::cout << "YOU HAVE BEEN KILLED" << std::endl;
+	}
 
 
 	//-------------------------------
