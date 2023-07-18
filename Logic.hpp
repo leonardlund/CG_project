@@ -94,7 +94,7 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 
 	// ----- DOLL rotation ---------
 	static float dolldirection = 0;
-	const float dollSpeed = glm::radians(80.0f);
+	const float dollSpeed = glm::radians(50.0f);
 	dolldirection += deltaT * dollSpeed;
 	dollAngle = dolldirection;
 

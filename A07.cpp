@@ -267,21 +267,20 @@ class Assignment07 : public BaseProject {
 		
 		GameLogic(this, Ar, ViewPrj, WM, ViewPosition, dollAngle);
 		
-		glm::quat dollRotationQuaternion = glm::quat(glm::vec3(0, dollAngle, 0));
+		glm::quat dollRotationQuaternion = glm::quat(glm::vec3(0, -dollAngle+glm::radians(90.0f), 0));
 
 		UniformBufferObject ubo{};								
 		// Here is where you actually update your uniforms
 
 		// updates global uniforms
 		GlobalUniformBufferObject gubo{};
-		//gubo.lightPosition= glm::vec3(cos(glm::radians(135.0f)), sin(glm::radians(135.0f)), 0.0f);
 		gubo.lightPosition = glm::vec3(100.0f, 100.0f, 100.0f);
 		gubo.lightColor = glm::vec4(0.5f, 0.5f, 1.0f, 1.0f);
 		gubo.eyePos = ViewPosition;
 		/* Leo addition */
-		gubo.lightDirDoll = glm::vec3(sin(dollAngle), -sin(glm::radians(-30.0f)), cos(dollAngle));
+		gubo.lightDirDoll = glm::vec3(cos(dollAngle), sin(glm::radians(-15.0f)), sin(dollAngle));
 		gubo.lightColorDoll = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-		gubo.eyePosDoll = glm::vec3(0, 1, 0);
+		gubo.eyePosDoll = glm::vec3(0, 0.2, 0);
 		/* End Leo addition */
 
 		// CHARACTER UBO
