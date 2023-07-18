@@ -291,7 +291,7 @@ class Assignment07 : public BaseProject {
 		DS1.map(currentImage, &gubo, sizeof(gubo), 2);
 
 		// DOLL UBO
-		ubo.mMat = glm::translate(glm::scale(glm::mat4(1), glm::vec3(2)), glm::vec3(0, 0, 0)) * glm::mat4(dollRotationQuaternion);
+		ubo.mMat = glm::translate(glm::scale(glm::mat4(1), glm::vec3(1)), glm::vec3(0, 0, 0)) * glm::mat4(dollRotationQuaternion);
 		ubo.mvpMat = ViewPrj * ubo.mMat;
 		ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
 		DS2.map(currentImage, &ubo, sizeof(ubo), 0);

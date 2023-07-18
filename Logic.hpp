@@ -20,8 +20,8 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 	const float camHeight = 1;
 	const float camDist = 2;
 	// Camera Pitch limits
-	const float minPitch = glm::radians(-8.75f);
-	const float maxPitch = glm::radians(60.0f);
+	const float minPitch = glm::radians(-30.0f);
+	const float maxPitch = glm::radians(20.0f);
 	const float minYaw = glm::radians(-360.0f);
 	const float maxYaw = glm::radians(360.0f);
 	// Rotation and motion speed
@@ -46,7 +46,7 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 
 	//--- World Matrix ---
 	static float objYaw = -1.7f;
-	objYaw += ROT_SPEED * r.z * deltaT;
+	objYaw -= ROT_SPEED * r.y * deltaT;
 	objYaw = objYaw > maxYaw ? objYaw - maxYaw : (objYaw < minYaw 
 		? objYaw + maxYaw : objYaw); // avoid overflows
 
@@ -55,7 +55,8 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 	m *= MOVE_SPEED * deltaT;
 	glm::vec4 charMovement = glm::mat4(movementDirection) * glm::vec4(m, 1);
 	Pos += glm::vec3(charMovement);
-	Pos.y = Pos.y < 0.0f ? 0.0f : Pos.y; // avoid character going underground
+	Pos.y = 0; // our character can't fly
+	// Pos.y = Pos.y < 0.0f ? 0.0f : Pos.y; // avoid character going underground
 
 	World = glm::translate(glm::mat4(1.0), Pos) *
 		glm::mat4(glm::quat(glm::vec3(0,objYaw,0)));
@@ -85,7 +86,7 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 	ViewPosition = cam;
 
 	glm::vec3 u = glm::vec3(0, 1, 0);
-	glm::mat4 View = glm::lookAt(cam, Pos, u);
+	glm::mat4 View = glm::lookAt(cam, Pos + glm::vec3(0,0.5,0), u);
 	glm::mat4 Proj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
 	Proj[1][1] *= -1;
 
