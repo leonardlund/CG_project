@@ -20,10 +20,16 @@ struct GlobalUniformBufferObject {
 	alignas(16) glm::vec3 eyePosDoll;
 };
 
+struct GlobalUniformBufferObject2 {
+	alignas(16) glm::vec3 selector;
+	alignas(16) glm::vec3 lightDir;
+	alignas(16) glm::vec4 lightColor;
+	alignas(16) glm::vec3 eyePos;
+};
+
 struct VertexGenerated {
 	glm::vec3 pos;
 	glm::vec3 norm;
-	glm::vec3 color;
 };
 
 struct VertexMesh {
@@ -41,8 +47,8 @@ class Assignment07 : public BaseProject {
 	// Here you list all the Vulkan objects you need:
 	
 	// Descriptor Layouts [what will be passed to the shaders]
-	DescriptorSetLayout DSLMesh, DSLGenerated;
-
+	DescriptorSetLayout DSLMesh;
+	DescriptorSetLayout DSLGenerated;
 	// Vertex formats
 	VertexDescriptor VMesh, VGenerated;
 
@@ -87,53 +93,19 @@ class Assignment07 : public BaseProject {
 	void localInit() {
 		// Descriptor Layouts [what will be passed to the shaders]
 		DSLMesh.init(this, {
-					// this array contains the binding:
-					// first  element : the binding number
-					// second element : the type of element (buffer or texture)
-					// third  element : the pipeline stage where it will be used
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
 					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
 					{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
 				  });
 
 		DSLGenerated.init(this, {
-			// this array contains the binding:
-			// first  element : the binding number
-			// second element : the type of element (buffer or texture)
-			// third  element : the pipeline stage where it will be used
-			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-			{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
+				{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
+				{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
 			});
 
 		VMesh.init(this, {
-			// this array contains the bindings
-			// first  element : the binding number
-			// second element : the stride of this binging
-			// third  element : whether this parameter change per vertex or per instance
-			//                  using the corresponding Vulkan constant
 			{0, sizeof(VertexMesh), VK_VERTEX_INPUT_RATE_VERTEX}
 			}, {
-				// this array contains the location
-				// first  element : the binding number
-				// second element : the location number
-				// third  element : the offset of this element in the memory record
-				// fourth element : the data type of the element
-				//                  using the corresponding Vulkan constant
-				// fifth  elmenet : the size in byte of the element
-				// sixth  element : a constant defining the element usage
-				//                   POSITION - a vec3 with the position
-				//                   NORMAL   - a vec3 with the normal vector
-				//                   UV       - a vec2 with a UV coordinate
-				//                   COLOR    - a vec4 with a RGBA color
-				//                   TANGENT  - a vec4 with the tangent vector
-				//                   OTHER    - anything else
-				//
-				// ***************** DOUBLE CHECK ********************
-				//    That the Vertex data structure you use in the "offsetoff" and
-				//	in the "sizeof" in the previous array, refers to the correct one,
-				//	if you have more than one vertex format!
-				// ***************************************************
 				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, pos),
 					   sizeof(glm::vec3), POSITION},
 				{0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, norm),
@@ -145,24 +117,19 @@ class Assignment07 : public BaseProject {
 		VGenerated.init(this, {
 			{0, sizeof(VertexGenerated), VK_VERTEX_INPUT_RATE_VERTEX}
 			}, {
-				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, pos),
-					   sizeof(glm::vec3), POSITION},
-				{0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, norm),
-					   sizeof(glm::vec3), NORMAL},
-				{0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, color),
-					   sizeof(glm::vec3), COLOR}
+			  {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, pos),
+					 sizeof(glm::vec3), POSITION},
+			  {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, norm),
+					 sizeof(glm::vec3), NORMAL}
 			});
 
 
-		// Pipelines [Shader couples]
-		// The last array, is a vector of pointer to the layouts of the sets that will
-		// be used in this pipeline. The first element will be set 0, and so on..
 		PMesh.init(this, &VMesh, "shaders/PhongVert.spv", "shaders/PhongFrag.spv", {&DSLMesh});
 		PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL,
  								    VK_CULL_MODE_NONE, false);
 		PGenerated.init(this, &VGenerated, "shaders/PhongVert.spv", "shaders/PhongFrag.spv", { &DSLGenerated });
-		// PGenerated.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL,
-		//	VK_CULL_MODE_NONE, false);
+		 PGenerated.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL,
+			VK_CULL_MODE_NONE, false);
 
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
@@ -210,6 +177,10 @@ class Assignment07 : public BaseProject {
 					{2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
 				});
 		}
+		//DSRedLine.init(this, &DSLGenerated, {
+			//		{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
+				//	{2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
+			//});
 		DSRedLine.init(this, &DSLGenerated, {
 					{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
 					{2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
@@ -224,6 +195,7 @@ class Assignment07 : public BaseProject {
 		
 		DS1.cleanup();
 		DS2.cleanup();
+		DSRedLine.cleanup();
 		DSG[0].cleanup();
 		DSG[1].cleanup();
 		DSG[2].cleanup();
@@ -257,7 +229,6 @@ class Assignment07 : public BaseProject {
 	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
 
 		PMesh.bind(commandBuffer);
-		PGenerated.bind(commandBuffer);
 
 		M1.bind(commandBuffer);
 		
@@ -281,6 +252,11 @@ class Assignment07 : public BaseProject {
 			vkCmdDrawIndexed(commandBuffer,
 					static_cast<uint32_t>(MG.indices.size()), 1, 0, 0, 0);
 		}
+		PGenerated.bind(commandBuffer);
+		ModelRedLine.bind(commandBuffer);
+		DSRedLine.bind(commandBuffer, PGenerated,1, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(ModelRedLine.indices.size()), 3, 1, 0, 0);
 	}
 
 	// Here is where you update the uniforms.
@@ -335,6 +311,12 @@ class Assignment07 : public BaseProject {
 			DSG[i].map(currentImage, &ubo, sizeof(ubo), 0);
 			DSG[i].map(currentImage, &gubo, sizeof(gubo), 2);
 		}
+		ubo.mMat = glm::translate(glm::scale(glm::mat4(1), glm::vec3(128)), glm::vec3(-1, 0, -1));
+		ubo.mvpMat = ViewPrj * ubo.mMat;
+		ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
+		DSRedLine.map(currentImage, &ubo, sizeof(ubo), 0);
+		DSRedLine.map(currentImage, &gubo, sizeof(gubo), 2);
+
 	}
 	void createRedLineMesh(std::vector<VertexGenerated> &vDef, std::vector<uint32_t> &vIdx);
 
