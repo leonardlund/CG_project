@@ -49,9 +49,9 @@ class Assignment07 : public BaseProject {
 	Pipeline PMesh, PGenerated;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
-	Model<VertexMesh> M1, M2, MG;
-	Model<VertexGenerated> ModelRedLine;
-	Texture T1, T2, TG[4];
+	Model<VertexMesh> M1, M2, MG, MRedLine;
+	//Model<VertexGenerated> ModelRedLine;
+	Texture T1, T2, TG[4], TRedLine;
 	DescriptorSet DS1, DS2, DSG[4], DSRedLine;
 	
 	// Other application parameters
@@ -68,9 +68,9 @@ class Assignment07 : public BaseProject {
 		initialBackgroundColor = {0.0f, 0.6f, 0.8f, 1.0f};
 		
 		// Descriptor pool sizes
-		uniformBlocksInPool = 13;
-		texturesInPool = 7;
-		setsInPool = 7;
+		uniformBlocksInPool = 15;
+		texturesInPool = 10;
+		setsInPool = 10;
 		
 		Ar = 4.0f / 3.0f;
 	}
@@ -154,6 +154,7 @@ class Assignment07 : public BaseProject {
 		M1.init(this, &VMesh, "models/Character.obj", OBJ);
 		M2.init(this, &VMesh, "models/doll.obj", OBJ);
 		MG.init(this, &VMesh, "models/floor.obj", OBJ);
+        MRedLine.init(this, &VMesh, "models/floor.obj", OBJ);
 		
 		T1.init(this, "textures/Colors2.png");
 		T2.init(this, "textures/Material.001_baseColor.png");
@@ -161,6 +162,7 @@ class Assignment07 : public BaseProject {
 		TG[1].init(this, "textures/None_baseColor.jpeg");
 		TG[2].init(this, "textures/None_baseColor.jpeg");
 		TG[3].init(this, "textures/None_baseColor.jpeg");
+        TRedLine.init(this, "textures/RedColor.jpeg");
 		
 
 		GWM[0] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(128)),glm::vec3(-1,0,-1));	
@@ -178,12 +180,20 @@ class Assignment07 : public BaseProject {
 					{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
 					{1, TEXTURE, 0, &T1},
 					{2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
-				});
-		DS2.init(this, &DSLMesh, {
-					{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
-					{1, TEXTURE, 0, &T2},
-					{2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
-			});
+        });
+        
+        DS2.init(this, &DSLMesh, {
+            {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
+            {1, TEXTURE, 0, &T2},
+            {2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
+        });
+                 
+        DSRedLine.init(this, &DSLMesh, {
+                    {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
+                    {1, TEXTURE, 0, &TRedLine},
+                    {2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
+        });
+            
 		for(int i = 0; i < 4; i++) {
 			DSG[i].init(this, &DSLMesh, {
 					{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
@@ -203,6 +213,7 @@ class Assignment07 : public BaseProject {
 		DSG[1].cleanup();
 		DSG[2].cleanup();
 		DSG[3].cleanup();
+        DSRedLine.cleanup();
 	}
 
 	// Here you destroy all the Models, Texture and Desc. Set Layouts you created!
@@ -217,6 +228,8 @@ class Assignment07 : public BaseProject {
 		TG[2].cleanup();
 		TG[3].cleanup();
 		MG.cleanup();
+        TRedLine.cleanup();
+        MRedLine.cleanup();
 
 		DSLMesh.cleanup();
 		
@@ -243,6 +256,11 @@ class Assignment07 : public BaseProject {
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(M2.indices.size()), 1, 0, 0, 0);
 		/* End Leo addition*/
+            
+        MRedLine.bind(commandBuffer);
+        DSRedLine.bind(commandBuffer, PMesh, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+            static_cast<uint32_t>(MRedLine.indices.size()), 1, 0, 0, 0);
 
 		MG.bind(commandBuffer);
 		for(int i = 0; i < 4; i++) {
@@ -296,7 +314,14 @@ class Assignment07 : public BaseProject {
 		ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
 		DS2.map(currentImage, &ubo, sizeof(ubo), 0);
 		DS2.map(currentImage, &gubo, sizeof(gubo), 2);
-
+            
+        // REDLINE UBO
+        ubo.mMat = glm::translate(glm::scale(glm::mat4(1),glm::vec3(3, 1, 100)),glm::vec3(-1,0.01,-0.3));
+        ubo.mvpMat = ViewPrj * ubo.mMat;
+        ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
+        DSRedLine.map(currentImage, &ubo, sizeof(ubo), 0);
+        DSRedLine.map(currentImage, &gubo, sizeof(gubo), 2);
+            
 		for(int i = 0; i < 4; i++) {
 			ubo.mMat = GWM[i];
 			ubo.mvpMat = ViewPrj * ubo.mMat;

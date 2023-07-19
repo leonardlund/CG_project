@@ -90,7 +90,6 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 	glm::mat4 Proj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
 	Proj[1][1] *= -1;
 
-
 	ViewPrj = Proj * View;
 
 	// ----- DOLL rotation ---------
@@ -115,10 +114,10 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 		std::cout << "YOU HAVE BEEN KILLED" << std::endl;
 	}
 
-
 	//-------------------------------
-	if (Pos.x > 0) {
-		std::cout << "STOOOOP" << std::endl;
+    
+	if (Pos.x > -1.5) {
+		std::cout << "YOU WON!!!!!" << std::endl;
 	}
 
 }
