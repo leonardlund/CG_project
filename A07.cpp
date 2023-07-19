@@ -30,6 +30,7 @@ struct GlobalUniformBufferObject2 {
 struct VertexGenerated {
 	glm::vec3 pos;
 	glm::vec3 norm;
+	glm::vec2 UV;
 };
 
 struct VertexMesh {
@@ -75,9 +76,9 @@ class Assignment07 : public BaseProject {
 		initialBackgroundColor = {0.0f, 0.6f, 0.8f, 1.0f};
 		
 		// Descriptor pool sizes
-		uniformBlocksInPool = 13;
-		texturesInPool = 7;
-		setsInPool = 7;
+		uniformBlocksInPool = 15;
+		texturesInPool = 10;
+		setsInPool = 10;
 		
 		Ar = 4.0f / 3.0f;
 	}
@@ -117,11 +118,14 @@ class Assignment07 : public BaseProject {
 		VGenerated.init(this, {
 			{0, sizeof(VertexGenerated), VK_VERTEX_INPUT_RATE_VERTEX}
 			}, {
-			  {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, pos),
-					 sizeof(glm::vec3), POSITION},
-			  {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, norm),
-					 sizeof(glm::vec3), NORMAL}
+				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, pos),
+					   sizeof(glm::vec3), POSITION},
+				{0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, norm),
+					   sizeof(glm::vec3), NORMAL},
+				{0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexGenerated, UV),
+					   sizeof(glm::vec2), UV}
 			});
+
 
 
 		PMesh.init(this, &VMesh, "shaders/PhongVert.spv", "shaders/PhongFrag.spv", {&DSLMesh});
