@@ -1,5 +1,5 @@
 
-void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, glm::vec3& ViewPosition, float& dollAngle) {
+void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, glm::vec3& ViewPosition, float& dollAngle, int& gameState) {
 	// The procedure must implement the game logic  to move the character in third person.
 	// Input:
 	// <Assignment07 *A> Pointer to the current assignment code. Required to read the input from the user
@@ -12,6 +12,7 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 	const float FOVy = glm::radians(45.0f);
 	const float nearPlane = 0.1f;
 	const float farPlane = 100.f;
+	
 
 	// Player starting point
 	const glm::vec3 StartingPosition = glm::vec3(-20, 0.0, -10);
@@ -109,6 +110,23 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 	float firstCheck = glm::dot(firstNormal, Pos);
 	float secondCheck = glm::dot(secondNormal, Pos);
 	glm::vec3 zeroVec = glm::vec3(0.0f);
+
+	static bool wasFire = false;
+	bool handleFire = (wasFire && (!fire));
+	wasFire = fire;
+
+	switch (gameState) {
+	case 0: // initial state - show splash screen
+		if (handleFire) {
+			gameState = 1;	// jump to the wait key state
+		}
+		break;
+	case 1: // wait key state
+		if (handleFire) {
+			gameState = 2;	// jump to the moving handle state
+		}
+		break;
+	}
 
 	if (firstCheck <= 0 && secondCheck >= 0 && (r != zeroVec || m != zeroVec)) {
 		std::cout << "YOU HAVE BEEN KILLED" << std::endl;
