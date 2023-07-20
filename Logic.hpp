@@ -14,7 +14,7 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 	const float farPlane = 100.f;
 
 	// Player starting point
-	const glm::vec3 StartingPosition = glm::vec3(-20, 0.0, -10);
+	const glm::vec3 StartingPosition = glm::vec3(-50, 0.0, 0);
 
 	// Camera target height and distance
 	const float camHeight = 1;
@@ -55,8 +55,7 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 	m *= MOVE_SPEED * deltaT;
 	glm::vec4 charMovement = glm::mat4(movementDirection) * glm::vec4(m, 1);
 	Pos += glm::vec3(charMovement);
-	Pos.y = 0; // our character can't fly
-	// Pos.y = Pos.y < 0.0f ? 0.0f : Pos.y; // avoid character going underground
+	Pos.y = 0; // our character can't fly or go underground
 
 	World = glm::translate(glm::mat4(1.0), Pos) *
 		glm::mat4(glm::quat(glm::vec3(0,objYaw,0)));
@@ -70,8 +69,6 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 	camPitch += ROT_SPEED * r.x * deltaT;
 	camPitch = camPitch < minPitch ? minPitch : (camPitch > maxPitch ? maxPitch : camPitch); 
 	camYaw = -objYaw;
-	//camYaw += ROT_SPEED * r.y * deltaT;
-	//camYaw = camYaw > maxYaw ? camYaw - maxYaw : (camYaw < minYaw ? camYaw + maxYaw : camYaw);
 
 
 	const glm::vec3 CAMBASE = glm::vec3(0, camHeight, camDist);
@@ -93,9 +90,12 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 	ViewPrj = Proj * View;
 
 	// ----- DOLL rotation ---------
-	static float dolldirection = 0;
+	static float dolldirection = glm::radians(180.0f);
 	const float dollSpeed = glm::radians(50.0f);
-	dolldirection += deltaT * dollSpeed;
+	static float time = 0;
+	const float timeSpeed = 1.5f;
+	time += deltaT * timeSpeed;
+	dolldirection += deltaT * dollSpeed * (2*cos(time)-cos(2*time) + 0.5*cos(5*time) + 0.5);
 	dollAngle = dolldirection;
 
 	float epsilon = glm::radians(10.0f);
