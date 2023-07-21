@@ -183,12 +183,12 @@ class Assignment07 : public BaseProject {
 		MSplash.initMesh(this, &VOverlay);
 
 
-		T1.init(this, "textures/Colors3.png");
-		T2.init(this, "textures/Material.001_baseColor.png");
-		TG[0].init(this, "textures/None_baseColor.jpeg");
-		TG[1].init(this, "textures/None_baseColor.jpeg");
-		TG[2].init(this, "textures/None_baseColor.jpeg");
-		TG[3].init(this, "textures/None_baseColor.jpeg");
+		T1.init(this, "textures/CharacterTexture.png");
+		T2.init(this, "textures/DollTexture.png");
+		TG[0].init(this, "textures/GroundTexture.jpeg");
+		TG[1].init(this, "textures/GroundTexture.jpeg");
+		TG[2].init(this, "textures/GroundTexture.jpeg");
+		TG[3].init(this, "textures/GroundTexture.jpeg");
 		TW[0].init(this, "textures/RedColor.jpeg");
 		TW[1].init(this, "textures/RedColor.jpeg");
 		TW[2].init(this, "textures/RedColor.jpeg");
