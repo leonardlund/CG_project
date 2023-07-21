@@ -73,7 +73,7 @@ class Project : public BaseProject {
 		// window size, titile and initial background
 		windowWidth = 800;
 		windowHeight = 600;
-		windowTitle = "Assignment 07";
+		windowTitle = "Project";
     	windowResizable = GLFW_TRUE;
 		initialBackgroundColor = {0.0f, 0.6f, 0.8f, 1.0f};
 		
