@@ -19,6 +19,10 @@ struct GlobalUniformBufferObject {
 	alignas(16) glm::vec3 eyePosDoll;
 };
 
+struct OverlayUniformBlock {
+	alignas(4) float visible;
+};
+
 struct VertexGenerated {
 	glm::vec3 pos;
 	glm::vec3 norm;
@@ -31,8 +35,13 @@ struct VertexMesh {
 	glm::vec2 UV;
 };
 
+struct VertexOverlay {
+	glm::vec2 pos;
+	glm::vec2 UV;
+};
+
 class Assignment07;
-void GameLogic(Assignment07 *A, float Ar, glm::mat4 &ViewPrj, glm::mat4 &World, glm::vec3 &ViewPosition, float &dollAngle);
+void GameLogic(Assignment07 *A, float Ar, glm::mat4 &ViewPrj, glm::mat4 &World, glm::vec3 &ViewPosition, float &dollAngle, int &gameState);
 
 // MAIN ! 
 class Assignment07 : public BaseProject {
@@ -40,19 +49,24 @@ class Assignment07 : public BaseProject {
 	// Here you list all the Vulkan objects you need:
 	
 	// Descriptor Layouts [what will be passed to the shaders]
-	DescriptorSetLayout DSLMesh, DSLGenerated;
+	DescriptorSetLayout DSLMesh, DSLOverlay;
 
 	// Vertex formats
-	VertexDescriptor VMesh, VGenerated;
+	VertexDescriptor VMesh, VOverlay;
 
 	// Pipelines [Shader couples]
-	Pipeline PMesh, PGenerated;
+	Pipeline PMesh, POverlay;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	Model<VertexMesh> M1, M2, MG, MRedLine, MW;
+	Model<VertexOverlay> MSplash;
+
 	//Model<VertexGenerated> ModelRedLine;
-	Texture T1, T2, TG[4], TRedLine, TW[4];
-	DescriptorSet DS1, DS2, DSG[4], DSRedLine, DSW[4];
+	Texture T1, T2, TG[4], TRedLine, TSplash, TWinSplash, TLostSplash, TW[4];
+	DescriptorSet DS1, DS2, DSG[4], DSRedLine, DSSplash, DSWinSplash, DSLostSplash, DSW[4];
+
+	OverlayUniformBlock uboSplash;
+
 	
 	// Other application parameters
 	float Ar;
@@ -69,9 +83,9 @@ class Assignment07 : public BaseProject {
 		initialBackgroundColor = {0.0f, 0.6f, 0.8f, 1.0f};
 		
 		// Descriptor pool sizes
-		uniformBlocksInPool = 25;
-		texturesInPool = 20;
-		setsInPool = 20;
+		uniformBlocksInPool = 28;
+		texturesInPool = 23;
+		setsInPool = 23;
 		
 		Ar = 4.0f / 3.0f;
 	}
@@ -95,6 +109,11 @@ class Assignment07 : public BaseProject {
 					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
 					{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
 				  });
+		DSLOverlay.init(this, {
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+			});
+
 
 		VMesh.init(this, {
 			// this array contains the bindings
@@ -131,17 +150,15 @@ class Assignment07 : public BaseProject {
 				{0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexMesh, UV),
 					   sizeof(glm::vec2), UV}
 			});
-
-		VGenerated.init(this, {
-			{0, sizeof(VertexGenerated), VK_VERTEX_INPUT_RATE_VERTEX}
+		VOverlay.init(this, {
+				  {0, sizeof(VertexOverlay), VK_VERTEX_INPUT_RATE_VERTEX}
 			}, {
-				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, pos),
-					   sizeof(glm::vec3), POSITION},
-				{0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, norm),
-					   sizeof(glm::vec3), NORMAL},
-				{0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, color),
-					   sizeof(glm::vec3), COLOR}
+			  {0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexOverlay, pos),
+					 sizeof(glm::vec2), OTHER},
+			  {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexOverlay, UV),
+					 sizeof(glm::vec2), UV}
 			});
+		
 
 
 		// Pipelines [Shader couples]
@@ -150,25 +167,37 @@ class Assignment07 : public BaseProject {
 		PMesh.init(this, &VMesh, "shaders/PhongVert.spv", "shaders/PhongFrag.spv", {&DSLMesh});
 		PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL,
  								    VK_CULL_MODE_NONE, false);
+		POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", { &DSLOverlay });
+		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
+			VK_CULL_MODE_NONE, false);
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
 		M1.init(this, &VMesh, "models/Character.obj", OBJ);
 		M2.init(this, &VMesh, "models/doll.obj", OBJ);
 		MG.init(this, &VMesh, "models/floor.obj", OBJ);
         MRedLine.init(this, &VMesh, "models/floor.obj", OBJ);
-        MW.init(this, &VMesh, "models/floor.obj", OBJ);
-		
+		MW.init(this, &VMesh, "models/floor.obj", OBJ);
+		MSplash.vertices = { {{-1.0f, -1.0f}, {0.0102f, 0.0f}}, {{-1.0f, 1.0f}, {0.0102f,0.85512f}},
+						 {{ 1.0f,-1.0f}, {1.0f,0.0f}}, {{ 1.0f, 1.0f}, {1.0f,0.85512f}} };
+		MSplash.indices = { 0, 1, 2,    1, 2, 3 };
+		MSplash.initMesh(this, &VOverlay);
+
+
 		T1.init(this, "textures/Colors2.png");
 		T2.init(this, "textures/Material.001_baseColor.png");
 		TG[0].init(this, "textures/None_baseColor.jpeg");
 		TG[1].init(this, "textures/None_baseColor.jpeg");
 		TG[2].init(this, "textures/None_baseColor.jpeg");
 		TG[3].init(this, "textures/None_baseColor.jpeg");
+		TW[0].init(this, "textures/RedColor.jpeg");
+		TW[1].init(this, "textures/RedColor.jpeg");
+		TW[2].init(this, "textures/RedColor.jpeg");
+		TW[3].init(this, "textures/RedColor.jpeg");
         TRedLine.init(this, "textures/RedColor.jpeg");
-        TW[0].init(this, "textures/RedColor.jpeg");
-        TW[1].init(this, "textures/RedColor.jpeg");
-        TW[2].init(this, "textures/RedColor.jpeg");
-        TW[3].init(this, "textures/RedColor.jpeg");
+		TSplash.init(this, "textures/SplashScreen.png");
+		TWinSplash.init(this, "textures/YouWon.png");
+		TLostSplash.init(this, "textures/YouDied.png");
+
 		
 
 		// GROUND World matrix
@@ -188,6 +217,8 @@ class Assignment07 : public BaseProject {
 	void pipelinesAndDescriptorSetsInit() {
 		// This creates a new pipeline (with the current surface), using its shaders
 		PMesh.create();
+		POverlay.create();
+
 
 		// PLAYER
 		DS1.init(this, &DSLMesh, {
@@ -218,6 +249,20 @@ class Assignment07 : public BaseProject {
 					{2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
 				});
 		}
+		DSSplash.init(this, &DSLOverlay, {
+					{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
+					{1, TEXTURE, 0, &TSplash}
+			});
+		DSWinSplash.init(this, &DSLOverlay, {
+					{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
+					{1, TEXTURE, 0, &TWinSplash}
+			});
+
+		DSLostSplash.init(this, &DSLOverlay, {
+					{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
+					{1, TEXTURE, 0, &TLostSplash}
+			});
+	
         // WALLS
         for(int i = 0; i < 4; i++) {
             DSW[i].init(this, &DSLMesh, {
@@ -231,7 +276,8 @@ class Assignment07 : public BaseProject {
 	// Here you destroy your pipelines and Descriptor Sets!
 	void pipelinesAndDescriptorSetsCleanup() {
 		PMesh.cleanup();
-		
+		POverlay.cleanup();
+
 		DS1.cleanup();
 		DS2.cleanup();
 		DSG[0].cleanup();
@@ -239,6 +285,10 @@ class Assignment07 : public BaseProject {
 		DSG[2].cleanup();
 		DSG[3].cleanup();
         DSRedLine.cleanup();
+		DSSplash.cleanup();
+		DSWinSplash.cleanup();
+		DSLostSplash.cleanup();
+
         DSW[0].cleanup();
         DSW[1].cleanup();
         DSW[2].cleanup();
@@ -250,6 +300,9 @@ class Assignment07 : public BaseProject {
 	void localCleanup() {
 		T1.cleanup();
 		T2.cleanup();
+		TSplash.cleanup();
+		TWinSplash.cleanup();
+		TLostSplash.cleanup();
 		M1.cleanup();
 		M2.cleanup();
 		TG[0].cleanup();
@@ -264,10 +317,13 @@ class Assignment07 : public BaseProject {
         TW[2].cleanup();
         TW[3].cleanup();
         MW.cleanup();
+		MSplash.cleanup();
 
 		DSLMesh.cleanup();
 		
 		PMesh.destroy();		
+		POverlay.destroy();
+
 	}
 	
 	// Here it is the creation of the command buffer:
@@ -293,93 +349,115 @@ class Assignment07 : public BaseProject {
         MRedLine.bind(commandBuffer);
         DSRedLine.bind(commandBuffer, PMesh, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer,
-                         static_cast<uint32_t>(MRedLine.indices.size()), 1, 0, 0, 0);
-        
-		// GROUND
-        MG.bind(commandBuffer);
-        for(int i = 0; i < 4; i++) {
-            DSG[i].bind(commandBuffer, PMesh, 0, currentImage);
-            vkCmdDrawIndexed(commandBuffer,
-                static_cast<uint32_t>(MG.indices.size()), 1, 0, 0, 0);
-        }
-        // WALLS
-        MW.bind(commandBuffer);
-        for(int i = 0; i < 4; i++) {
-            DSW[i].bind(commandBuffer, PMesh, 0, currentImage);
-            vkCmdDrawIndexed(commandBuffer,
-                static_cast<uint32_t>(MW.indices.size()), 1, 0, 0, 0);
-        }
-    }
-        
-        // Here is where you update the uniforms.
-        // Very likely this will be where you will be writing the logic of your application.
-        void updateUniformBuffer(uint32_t currentImage) {
-            if(glfwGetKey(window, GLFW_KEY_ESCAPE)) {
-                glfwSetWindowShouldClose(window, GL_TRUE);
-            }
-            
-			// Variables which are updated in GameLogic()
-            glm::mat4 ViewPrj;
-            glm::mat4 WM;
-            glm::vec3 ViewPosition;
-            float dollAngle;
-            
-            GameLogic(this, Ar, ViewPrj, WM, ViewPosition, dollAngle);
-            
-            UniformBufferObject ubo{};
-            // Here is where you actually update your uniforms
-            
-            // updates global uniforms
-            GlobalUniformBufferObject gubo{};
-            gubo.lightPosition = glm::vec3(100.0f, 100.0f, 100.0f);
-            gubo.lightColor = glm::vec4(0.5f, 0.5f, 1.0f, 1.0f);
-            gubo.eyePos = ViewPosition;
-			glm::quat dollRotationQuaternion = glm::quat(glm::vec3(0, -dollAngle + glm::radians(90.0f), 0));
-            gubo.lightDirDoll = glm::vec3(cos(dollAngle), sin(glm::radians(-15.0f)), sin(dollAngle));
-            gubo.lightColorDoll = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-            gubo.eyePosDoll = glm::vec3(0, 0.2, 0);
-            
-            // CHARACTER UBO
-            ubo.mMat = WM * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0,1,0));
-            ubo.mvpMat = ViewPrj * ubo.mMat;
-            ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
-            DS1.map(currentImage, &ubo, sizeof(ubo), 0);
-            DS1.map(currentImage, &gubo, sizeof(gubo), 2);
-            
-            // DOLL UBO
-            ubo.mMat = glm::translate(glm::scale(glm::mat4(1), glm::vec3(1)), glm::vec3(0, 0, 0)) * glm::mat4(dollRotationQuaternion);
-            ubo.mvpMat = ViewPrj * ubo.mMat;
-            ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
-            DS2.map(currentImage, &ubo, sizeof(ubo), 0);
-            DS2.map(currentImage, &gubo, sizeof(gubo), 2);
-            
-            // REDLINE UBO
-            ubo.mMat = glm::translate(glm::scale(glm::mat4(1),glm::vec3(3, 1, 100)),glm::vec3(-1,0.01,-0.3));
-            ubo.mvpMat = ViewPrj * ubo.mMat;
-            ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
-            DSRedLine.map(currentImage, &ubo, sizeof(ubo), 0);
-            DSRedLine.map(currentImage, &gubo, sizeof(gubo), 2);
-            
-			// GROUND UBO
-            for(int i = 0; i < 4; i++) {
-                ubo.mMat = GWM[i];
-                ubo.mvpMat = ViewPrj * ubo.mMat;
-                ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
-                DSG[i].map(currentImage, &ubo, sizeof(ubo), 0);
-                DSG[i].map(currentImage, &gubo, sizeof(gubo), 2);
-            }
-            
-			// WALL UBO
-            //POSITION OF WALLS ?????
-            for(int i = 0; i < 4; i++) {
-                ubo.mMat = WWM[i];
-                ubo.mvpMat = ViewPrj * ubo.mMat;
-                ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
-                DSW[i].map(currentImage, &ubo, sizeof(ubo), 0);
-                DSW[i].map(currentImage, &gubo, sizeof(gubo), 2);
-            }
-        }
+            static_cast<uint32_t>(MRedLine.indices.size()), 1, 0, 0, 0);
 
+		MG.bind(commandBuffer);
+		for(int i = 0; i < 4; i++) {
+			DSG[i].bind(commandBuffer, PMesh, 0, currentImage);
+						
+			vkCmdDrawIndexed(commandBuffer,
+					static_cast<uint32_t>(MG.indices.size()), 1, 0, 0, 0);
+		}
+		MW.bind(commandBuffer);
+		for (int i = 0; i < 4; i++) {
+			DSW[i].bind(commandBuffer, PMesh, 0, currentImage);
+
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MW.indices.size()), 1, 0, 0, 0);
+		}
+
+		POverlay.bind(commandBuffer);
+		MSplash.bind(commandBuffer);
+		DSSplash.bind(commandBuffer, POverlay, 0, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MSplash.indices.size()), 1, 0, 0, 0);
+
+		DSWinSplash.bind(commandBuffer, POverlay, 0, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MSplash.indices.size()), 1, 0, 0, 0);
+		DSLostSplash.bind(commandBuffer, POverlay, 0, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MSplash.indices.size()), 1, 0, 0, 0);
+	}
+
+	// Here is where you update the uniforms.
+	// Very likely this will be where you will be writing the logic of your application.
+	void updateUniformBuffer(uint32_t currentImage) {
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
+			glfwSetWindowShouldClose(window, GL_TRUE);
+		}
+
+		glm::mat4 ViewPrj;
+		glm::mat4 WM;
+		glm::vec3 ViewPosition;
+		float dollAngle;
+		static int gameState = 0;
+
+		GameLogic(this, Ar, ViewPrj, WM, ViewPosition, dollAngle, gameState);
+
+		glm::quat dollRotationQuaternion = glm::quat(glm::vec3(0, -dollAngle + glm::radians(90.0f), 0));
+
+		UniformBufferObject ubo{};
+		// Here is where you actually update your uniforms
+
+		// updates global uniforms
+		GlobalUniformBufferObject gubo{};
+		gubo.lightPosition = glm::vec3(100.0f, 100.0f, 100.0f);
+		gubo.lightColor = glm::vec4(0.5f, 0.5f, 1.0f, 1.0f);
+		gubo.eyePos = ViewPosition;
+		/* Leo addition */
+		gubo.lightDirDoll = glm::vec3(cos(dollAngle), sin(glm::radians(-15.0f)), sin(dollAngle));
+		gubo.lightColorDoll = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		gubo.eyePosDoll = glm::vec3(0, 0.2, 0);
+		/* End Leo addition */
+
+		// CHARACTER UBO
+		ubo.mMat = WM * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0, 1, 0));
+		ubo.mvpMat = ViewPrj * ubo.mMat;
+		ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
+		DS1.map(currentImage, &ubo, sizeof(ubo), 0);
+		DS1.map(currentImage, &gubo, sizeof(gubo), 2);
+
+		// DOLL UBO
+		ubo.mMat = glm::translate(glm::scale(glm::mat4(1), glm::vec3(1)), glm::vec3(0, 0, 0)) * glm::mat4(dollRotationQuaternion);
+		ubo.mvpMat = ViewPrj * ubo.mMat;
+		ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
+		DS2.map(currentImage, &ubo, sizeof(ubo), 0);
+		DS2.map(currentImage, &gubo, sizeof(gubo), 2);
+
+		// REDLINE UBO
+		ubo.mMat = glm::translate(glm::scale(glm::mat4(1), glm::vec3(3, 1, 100)), glm::vec3(-1, 0.01, -0.3));
+		ubo.mvpMat = ViewPrj * ubo.mMat;
+		ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
+		DSRedLine.map(currentImage, &ubo, sizeof(ubo), 0);
+		DSRedLine.map(currentImage, &gubo, sizeof(gubo), 2);
+
+		for (int i = 0; i < 4; i++) {
+			ubo.mMat = GWM[i];
+			ubo.mvpMat = ViewPrj * ubo.mMat;
+			ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
+			DSG[i].map(currentImage, &ubo, sizeof(ubo), 0);
+			DSG[i].map(currentImage, &gubo, sizeof(gubo), 2);
+		}
+		// WALL UBO
+			//POSITION OF WALLS ?????
+		for (int i = 0; i < 4; i++) {
+			ubo.mMat = WWM[i];
+			ubo.mvpMat = ViewPrj * ubo.mMat;
+			ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
+			DSW[i].map(currentImage, &ubo, sizeof(ubo), 0);
+			DSW[i].map(currentImage, &gubo, sizeof(gubo), 2);
+		}
+		uboSplash.visible = (gameState == 0) ? 1.0f : 0.0f;
+		DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
+
+		uboSplash.visible = (gameState == 2) ? 1.0f : 0.0f;
+		DSLostSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
+
+		uboSplash.visible = (gameState == 3) ? 1.0f : 0.0f;
+		DSWinSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
+
+	}
 };
 
 #include "Logic.hpp"
