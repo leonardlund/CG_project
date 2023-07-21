@@ -95,7 +95,7 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 
 	// ----- DOLL rotation ---------
 	static float dolldirection = 0;
-	const float dollSpeed = glm::radians(50.0f);
+	float dollSpeed = glm::radians(50.0f);
 	dolldirection += deltaT * dollSpeed;
 	dollAngle = dolldirection;
 
@@ -121,21 +121,34 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 			gameState = 1;	// jump to the wait key state
 		}
 		break;
-	case 1: // wait key state
-		if (handleFire) {
+	case 1: 
+		if (firstCheck <= 0 && secondCheck >= 0 && (r != zeroVec || m != zeroVec)) {
 			gameState = 2;	// jump to the moving handle state
+			Pos = StartingPosition;
+		}
+		if (Pos.x > -1.5) {
+			gameState = 3;
+			Pos = StartingPosition;
 		}
 		break;
+	case 2:
+		if (handleFire) {
+			gameState = 1;	// jump to the wait key state
+		}
+	case 3:
+		if (handleFire) {
+			gameState = 1;	// jump to the wait key state
+		}
 	}
 
-	if (firstCheck <= 0 && secondCheck >= 0 && (r != zeroVec || m != zeroVec)) {
-		std::cout << "YOU HAVE BEEN KILLED" << std::endl;
-	}
+	//if (firstCheck <= 0 && secondCheck >= 0 && (r != zeroVec || m != zeroVec)) {
+		//std::cout << "YOU HAVE BEEN KILLED" << std::endl;
+	//}
 
 	//-------------------------------
     
-	if (Pos.x > -1.5) {
-		std::cout << "YOU WON!!!!!" << std::endl;
-	}
+	//if (Pos.x > -1.5) {
+		//std::cout << "YOU WON!!!!!" << std::endl;
+	//}
 
 }

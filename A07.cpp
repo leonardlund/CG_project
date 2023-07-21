@@ -62,8 +62,8 @@ class Assignment07 : public BaseProject {
 	Model<VertexOverlay> MSplash;
 
 	//Model<VertexGenerated> ModelRedLine;
-	Texture T1, T2, TG[4], TRedLine, TSplash;
-	DescriptorSet DS1, DS2, DSG[4], DSRedLine, DSSplash;
+	Texture T1, T2, TG[4], TRedLine, TSplash, TWinSplash, TLostSplash;
+	DescriptorSet DS1, DS2, DSG[4], DSRedLine, DSSplash, DSWinSplash, DSLostSplash;
 
 	OverlayUniformBlock uboSplash;
 
@@ -82,9 +82,9 @@ class Assignment07 : public BaseProject {
 		initialBackgroundColor = {0.0f, 0.6f, 0.8f, 1.0f};
 		
 		// Descriptor pool sizes
-		uniformBlocksInPool = 15;
-		texturesInPool = 10;
-		setsInPool = 10;
+		uniformBlocksInPool = 19;
+		texturesInPool = 14;
+		setsInPool = 14;
 		
 		Ar = 4.0f / 3.0f;
 	}
@@ -180,6 +180,7 @@ class Assignment07 : public BaseProject {
 		MSplash.indices = { 0, 1, 2,    1, 2, 3 };
 		MSplash.initMesh(this, &VOverlay);
 
+
 		T1.init(this, "textures/Colors2.png");
 		T2.init(this, "textures/Material.001_baseColor.png");
 		TG[0].init(this, "textures/None_baseColor.jpeg");
@@ -187,7 +188,9 @@ class Assignment07 : public BaseProject {
 		TG[2].init(this, "textures/None_baseColor.jpeg");
 		TG[3].init(this, "textures/None_baseColor.jpeg");
         TRedLine.init(this, "textures/RedColor.jpeg");
-		TSplash.init(this, "textures/SplashScreen.jpeg");
+		TSplash.init(this, "textures/SplashScreen.png");
+		TWinSplash.init(this, "textures/YouWon.png");
+		TLostSplash.init(this, "textures/YouDied.png");
 
 		
 
@@ -233,6 +236,15 @@ class Assignment07 : public BaseProject {
 					{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TSplash}
 			});
+		DSWinSplash.init(this, &DSLOverlay, {
+					{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
+					{1, TEXTURE, 0, &TWinSplash}
+			});
+
+		DSLostSplash.init(this, &DSLOverlay, {
+					{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
+					{1, TEXTURE, 0, &TLostSplash}
+			});
 	}
 
 	// Here you destroy your pipelines and Descriptor Sets!
@@ -248,6 +260,8 @@ class Assignment07 : public BaseProject {
 		DSG[3].cleanup();
         DSRedLine.cleanup();
 		DSSplash.cleanup();
+		DSWinSplash.cleanup();
+		DSLostSplash.cleanup();
 
 	}
 
@@ -257,6 +271,8 @@ class Assignment07 : public BaseProject {
 		T1.cleanup();
 		T2.cleanup();
 		TSplash.cleanup();
+		TWinSplash.cleanup();
+		TLostSplash.cleanup();
 		M1.cleanup();
 		M2.cleanup();
 		TG[0].cleanup();
@@ -312,6 +328,13 @@ class Assignment07 : public BaseProject {
 		POverlay.bind(commandBuffer);
 		MSplash.bind(commandBuffer);
 		DSSplash.bind(commandBuffer, POverlay, 0, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MSplash.indices.size()), 1, 0, 0, 0);
+
+		DSWinSplash.bind(commandBuffer, POverlay, 0, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MSplash.indices.size()), 1, 0, 0, 0);
+		DSLostSplash.bind(commandBuffer, POverlay, 0, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MSplash.indices.size()), 1, 0, 0, 0);
 	}
@@ -377,6 +400,13 @@ class Assignment07 : public BaseProject {
 		}
 		uboSplash.visible = (gameState == 0) ? 1.0f : 0.0f;
 		DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
+
+		uboSplash.visible = (gameState == 2) ? 1.0f : 0.0f;
+		DSLostSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
+
+		uboSplash.visible = (gameState == 3) ? 1.0f : 0.0f;
+		DSWinSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
+
 
 	}
 	
