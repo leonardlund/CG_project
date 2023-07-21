@@ -23,11 +23,6 @@ struct OverlayUniformBlock {
 	alignas(4) float visible;
 };
 
-struct VertexGenerated {
-	glm::vec3 pos;
-	glm::vec3 norm;
-	glm::vec3 color;
-};
 
 struct VertexMesh {
 	glm::vec3 pos;
@@ -40,11 +35,11 @@ struct VertexOverlay {
 	glm::vec2 UV;
 };
 
-class Assignment07;
-void GameLogic(Assignment07 *A, float Ar, glm::mat4 &ViewPrj, glm::mat4 &World, glm::vec3 &ViewPosition, float &dollAngle, int &gameState);
+class Project;
+void GameLogic(Project *A, float Ar, glm::mat4 &ViewPrj, glm::mat4 &World, glm::vec3 &ViewPosition, float &dollAngle, int &gameState);
 
 // MAIN ! 
-class Assignment07 : public BaseProject {
+class Project : public BaseProject {
 	protected:
 	// Here you list all the Vulkan objects you need:
 	
@@ -58,12 +53,12 @@ class Assignment07 : public BaseProject {
 	Pipeline PMesh, POverlay;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
-	Model<VertexMesh> M1, M2, MG, MRedLine, MW;
+	Model<VertexMesh> MCharacter, MDoll, MG, MRedLine, MW;
 	Model<VertexOverlay> MSplash;
 
 	//Model<VertexGenerated> ModelRedLine;
-	Texture T1, T2, TG[4], TRedLine, TSplash, TWinSplash, TLostSplash, TW[4];
-	DescriptorSet DS1, DS2, DSG[4], DSRedLine, DSSplash, DSWinSplash, DSLostSplash, DSW[4];
+	Texture TCharacter, TDoll, TG[4], TRedLine, TSplash, TWinSplash, TLostSplash, TW[4];
+	DescriptorSet DSCharacter, DSDoll, DSG[4], DSRedLine, DSSplash, DSWinSplash, DSLostSplash, DSW[4];
 
 	OverlayUniformBlock uboSplash;
 
@@ -172,8 +167,8 @@ class Assignment07 : public BaseProject {
 			VK_CULL_MODE_NONE, false);
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
-		M1.init(this, &VMesh, "models/Character.obj", OBJ);
-		M2.init(this, &VMesh, "models/doll.obj", OBJ);
+		MCharacter.init(this, &VMesh, "models/Character.obj", OBJ);
+		MDoll.init(this, &VMesh, "models/doll.obj", OBJ);
 		MG.init(this, &VMesh, "models/floor.obj", OBJ);
         MRedLine.init(this, &VMesh, "models/floor.obj", OBJ);
 		MW.init(this, &VMesh, "models/floor.obj", OBJ);
@@ -183,8 +178,8 @@ class Assignment07 : public BaseProject {
 		MSplash.initMesh(this, &VOverlay);
 
 
-		T1.init(this, "textures/CharacterTexture.png");
-		T2.init(this, "textures/DollTexture.png");
+		TCharacter.init(this, "textures/CharacterTexture.png");
+		TDoll.init(this, "textures/DollTexture.png");
 		TG[0].init(this, "textures/GroundTexture.jpeg");
 		TG[1].init(this, "textures/GroundTexture.jpeg");
 		TG[2].init(this, "textures/GroundTexture.jpeg");
@@ -226,16 +221,16 @@ class Assignment07 : public BaseProject {
 
 
 		// PLAYER
-		DS1.init(this, &DSLMesh, {
+		DSCharacter.init(this, &DSLMesh, {
 					{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
-					{1, TEXTURE, 0, &T1},
+					{1, TEXTURE, 0, &TCharacter},
 					{2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
         });
         
 		// DOLL
-        DS2.init(this, &DSLMesh, {
+        DSDoll.init(this, &DSLMesh, {
             {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
-            {1, TEXTURE, 0, &T2},
+            {1, TEXTURE, 0, &TDoll},
             {2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
         });
         
@@ -283,8 +278,8 @@ class Assignment07 : public BaseProject {
 		PMesh.cleanup();
 		POverlay.cleanup();
 
-		DS1.cleanup();
-		DS2.cleanup();
+		DSCharacter.cleanup();
+		DSDoll.cleanup();
 		DSG[0].cleanup();
 		DSG[1].cleanup();
 		DSG[2].cleanup();
@@ -303,13 +298,13 @@ class Assignment07 : public BaseProject {
 	// Here you destroy all the Models, Texture and Desc. Set Layouts you created!
 	// You also have to destroy the pipelines
 	void localCleanup() {
-		T1.cleanup();
-		T2.cleanup();
+		TCharacter.cleanup();
+		TDoll.cleanup();
 		TSplash.cleanup();
 		TWinSplash.cleanup();
 		TLostSplash.cleanup();
-		M1.cleanup();
-		M2.cleanup();
+		MCharacter.cleanup();
+		MDoll.cleanup();
 		TG[0].cleanup();
 		TG[1].cleanup();
 		TG[2].cleanup();
@@ -339,16 +334,16 @@ class Assignment07 : public BaseProject {
         PMesh.bind(commandBuffer);
 
 		// PLAYER
-        M1.bind(commandBuffer);
-        DS1.bind(commandBuffer, PMesh, 0, currentImage);
+        MCharacter.bind(commandBuffer);
+        DSCharacter.bind(commandBuffer, PMesh, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer,
-                         static_cast<uint32_t>(M1.indices.size()), 1, 0, 0, 0);
+                         static_cast<uint32_t>(MCharacter.indices.size()), 1, 0, 0, 0);
         
         // DOLL
-        M2.bind(commandBuffer);
-        DS2.bind(commandBuffer, PMesh, 0, currentImage);
+        MDoll.bind(commandBuffer);
+        DSDoll.bind(commandBuffer, PMesh, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer,
-                         static_cast<uint32_t>(M2.indices.size()), 1, 0, 0, 0);
+                         static_cast<uint32_t>(MDoll.indices.size()), 1, 0, 0, 0);
         
 		// FINISH LINE
         MRedLine.bind(commandBuffer);
@@ -420,15 +415,15 @@ class Assignment07 : public BaseProject {
 		ubo.mMat = WM * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0, 1, 0));
 		ubo.mvpMat = ViewPrj * ubo.mMat;
 		ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
-		DS1.map(currentImage, &ubo, sizeof(ubo), 0);
-		DS1.map(currentImage, &gubo, sizeof(gubo), 2);
+		DSCharacter.map(currentImage, &ubo, sizeof(ubo), 0);
+		DSCharacter.map(currentImage, &gubo, sizeof(gubo), 2);
 
 		// DOLL UBO
 		ubo.mMat = glm::translate(glm::scale(glm::mat4(1), glm::vec3(1)), glm::vec3(0, 0, 0)) * glm::mat4(dollRotationQuaternion);
 		ubo.mvpMat = ViewPrj * ubo.mMat;
 		ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
-		DS2.map(currentImage, &ubo, sizeof(ubo), 0);
-		DS2.map(currentImage, &gubo, sizeof(gubo), 2);
+		DSDoll.map(currentImage, &ubo, sizeof(ubo), 0);
+		DSDoll.map(currentImage, &gubo, sizeof(gubo), 2);
 
 		// REDLINE UBO
 		ubo.mMat = glm::translate(glm::scale(glm::mat4(1), glm::vec3(3, 1, 100)), glm::vec3(-1, 0.01, -0.3));
@@ -470,7 +465,7 @@ class Assignment07 : public BaseProject {
 
 // This is the main: probably you do not need to touch this!
 int main() {
-    Assignment07 app;
+    Project app;
 
     try {
         app.run();

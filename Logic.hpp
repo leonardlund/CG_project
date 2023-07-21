@@ -1,5 +1,5 @@
 
-void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, glm::vec3& ViewPosition, float& dollAngle, int& gameState) {
+void GameLogic(Project* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, glm::vec3& ViewPosition, float& dollAngle, int& gameState) {
 	// The procedure must implement the game logic  to move the character in third person.
 	// Input:
 	// <Assignment07 *A> Pointer to the current assignment code. Required to read the input from the user
