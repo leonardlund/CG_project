@@ -402,8 +402,8 @@ class Project : public BaseProject {
 
 		// updates global uniforms
 		GlobalUniformBufferObject gubo{};
-		gubo.lightPosition = glm::vec3(100.0f, 100.0f, 100.0f);
-		gubo.lightColor = glm::vec4(0.5f, 0.5f, 1.0f, 1.0f);
+		gubo.lightPosition = glm::vec3(50.0f, 100.0f, 50.0f);
+		gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		gubo.eyePos = ViewPosition;
 		/* Leo addition */
 		gubo.lightDirDoll = glm::vec3(cos(dollAngle), sin(glm::radians(-15.0f)), sin(dollAngle));
