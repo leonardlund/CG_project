@@ -49,18 +49,6 @@ vec3 BRDF_DOLL(vec3 V, vec3 N, vec3 L, vec3 Md, vec3 Ms, float gamma) {
 	//vec3 Ms - specular color of the surface
 	//float gamma - Exponent for power specular term
 
-	const float cosAlpha = dot(N, L);
-    const float clampY = clamp(cosAlpha, 0.0, 1.0);
-    
-    vec3 fDiffuse = L*Md*clampY; // the diffuse color. the light times the color of the object times the angle
-    
-    vec3 reflectedRayDir = N*dot(L, N);
-
-    vec3 dPerpendicular = reflectedRayDir-L;
-    vec3 r = dPerpendicular*2 + L;
-    
-    vec3 fSpecular = Ms*pow(clamp(dot(V, r), 0.0, 1.0), gamma);
- 
 	return L;
 }
 
