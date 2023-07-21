@@ -189,10 +189,10 @@ class Assignment07 : public BaseProject {
 		TG[1].init(this, "textures/GroundTexture.jpeg");
 		TG[2].init(this, "textures/GroundTexture.jpeg");
 		TG[3].init(this, "textures/GroundTexture.jpeg");
-		TW[0].init(this, "textures/RedColor.jpeg");
-		TW[1].init(this, "textures/RedColor.jpeg");
-		TW[2].init(this, "textures/RedColor.jpeg");
-		TW[3].init(this, "textures/RedColor.jpeg");
+		TW[0].init(this, "textures/wall.jpg");
+		TW[1].init(this, "textures/wall.jpg");
+		TW[2].init(this, "textures/wall.jpg");
+		TW[3].init(this, "textures/wall.jpg");
         TRedLine.init(this, "textures/RedColor.jpeg");
 		TSplash.init(this, "textures/SplashScreen.png");
 		TWinSplash.init(this, "textures/YouWon.png");
