@@ -29,6 +29,8 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 	const float ROT_SPEED = glm::radians(120.0f);
 	const float MOVE_SPEED = 2.0f;
 
+	static float objYaw = -1.7f;
+
 	// Integration with the timers and the controllers
 	// returns:
 	// <float deltaT> the time passed since the last frame
@@ -40,13 +42,14 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 	bool fire = false;
 	A->getSixAxis(deltaT, m, r, fire);
 
+
 	// Game Logic implementation
 	// Current Player Position - statc variables make sure that their value remain 
 	// unchanged in subsequent calls to the procedure
 	static glm::vec3 Pos = StartingPosition;
 
 	//--- World Matrix ---
-	static float objYaw = -1.7f;
+	
 	objYaw -= ROT_SPEED * r.y * deltaT;
 	objYaw = objYaw > maxYaw ? objYaw - maxYaw : (objYaw < minYaw 
 		? objYaw + maxYaw : objYaw); // avoid overflows
@@ -95,8 +98,13 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 	const float dollSpeed = glm::radians(50.0f);
 	static float time = 0;
 	const float timeSpeed = 1.5f;
+	float coef1 = 2.0f;
+	float coef2 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+	float coef3 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+	float coef4 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+	float coef5 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 	time += deltaT * timeSpeed;
-	dolldirection += deltaT * dollSpeed * (2*cos(time)-cos(2*time) + 0.5*cos(5*time) + 0.5);
+	dolldirection += deltaT * dollSpeed * (coef1*cos(time)+ coef2*cos(2*time) + coef3*cos(3*time) + coef4*cos(4*time) + coef5*cos(5*time) + 0.5);
 	dollAngle = dolldirection;
 
 	float epsilon = glm::radians(10.0f);
@@ -114,41 +122,43 @@ void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, 
 	static bool wasFire = false;
 	bool handleFire = (wasFire && (!fire));
 	wasFire = fire;
+	bool startPlaying = false;
 
 	switch (gameState) {
 	case 0: // initial state - show splash screen
 		if (handleFire) {
-			gameState = 1;	// jump to the wait key state
+			gameState = 1;	// Start playing
+			startPlaying = true;
 		}
 		break;
 	case 1: 
 		if (firstCheck <= 0 && secondCheck >= 0 && (r != zeroVec || m != zeroVec)) {
-			gameState = 2;	// jump to the moving handle state
+			gameState = 2;	// Lose
 			Pos = StartingPosition;
 		}
-		if (Pos.x > -1.5) {
+		if (Pos.x > -1.5) { // Win
 			gameState = 3;
 			Pos = StartingPosition;
 		}
-		break;
-	case 2:
-		if (handleFire) {
-			gameState = 1;	// jump to the wait key state
+		if (startPlaying) {
+			dolldirection = glm::radians(180.f);
+			startPlaying = false;
+			coef2 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			coef3 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			coef4 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			coef5 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 		}
-	case 3:
+		break;
+	case 2: // Lose
 		if (handleFire) {
-			gameState = 1;	// jump to the wait key state
+			gameState = 1;	// play again
+			startPlaying = true;
+		}
+	case 3: // Win
+		if (handleFire) {
+			gameState = 1;	// play again
+			startPlaying = true;
 		}
 	}
-
-	//if (firstCheck <= 0 && secondCheck >= 0 && (r != zeroVec || m != zeroVec)) {
-		//std::cout << "YOU HAVE BEEN KILLED" << std::endl;
-	//}
-
-	//-------------------------------
-    
-	//if (Pos.x > -1.5) {
-		//std::cout << "YOU WON!!!!!" << std::endl;
-	//}
 
 }
