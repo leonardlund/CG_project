@@ -1,5 +1,6 @@
 // This has been adapted from the Vulkan tutorial
 
+
 #include "Starter.hpp"
 
 
@@ -17,12 +18,6 @@ struct GlobalUniformBufferObject {
 	alignas(16) glm::vec3 lightDirDoll;
 	alignas(16) glm::vec4 lightColorDoll;
 	alignas(16) glm::vec3 eyePosDoll;
-};
-
-struct VertexGenerated {
-	glm::vec3 pos;
-	glm::vec3 norm;
-	glm::vec3 color;
 };
 
 struct VertexMesh {
@@ -63,9 +58,9 @@ class Assignment07 : public BaseProject {
 		// window size, titile and initial background
 		windowWidth = 800;
 		windowHeight = 600;
-		windowTitle = "Assignment 07";
+		windowTitle = "Red Light Green Light";
     	windowResizable = GLFW_TRUE;
-		initialBackgroundColor = {0.0f, 0.6f, 0.8f, 1.0f};
+		initialBackgroundColor = {0.0f, 0.0f, 0.0f, 1.0f};
 		
 		// Descriptor pool sizes
 		uniformBlocksInPool = 15;
@@ -131,16 +126,6 @@ class Assignment07 : public BaseProject {
 					   sizeof(glm::vec2), UV}
 			});
 
-		VGenerated.init(this, {
-			{0, sizeof(VertexGenerated), VK_VERTEX_INPUT_RATE_VERTEX}
-			}, {
-				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, pos),
-					   sizeof(glm::vec3), POSITION},
-				{0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, norm),
-					   sizeof(glm::vec3), NORMAL},
-				{0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexGenerated, color),
-					   sizeof(glm::vec3), COLOR}
-			});
 
 
 		// Pipelines [Shader couples]
@@ -242,30 +227,29 @@ class Assignment07 : public BaseProject {
 	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
 
 		PMesh.bind(commandBuffer);
+
+		// For the PLAYER
 		M1.bind(commandBuffer);
-		
 		DS1.bind(commandBuffer, PMesh, 0, currentImage);
-		
-					
 		vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(M1.indices.size()), 1, 0, 0, 0);
 		
-		/* Leo addition */
+		// For the DOLL
 		M2.bind(commandBuffer);
 		DS2.bind(commandBuffer, PMesh, 0, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(M2.indices.size()), 1, 0, 0, 0);
-		/* End Leo addition*/
             
+		// For the FINISH LINE
         MRedLine.bind(commandBuffer);
         DSRedLine.bind(commandBuffer, PMesh, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer,
             static_cast<uint32_t>(MRedLine.indices.size()), 1, 0, 0, 0);
 
+		// For the GROUND
 		MG.bind(commandBuffer);
 		for(int i = 0; i < 4; i++) {
 			DSG[i].bind(commandBuffer, PMesh, 0, currentImage);
-						
 			vkCmdDrawIndexed(commandBuffer,
 					static_cast<uint32_t>(MG.indices.size()), 1, 0, 0, 0);
 		}
@@ -278,28 +262,29 @@ class Assignment07 : public BaseProject {
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
 
+		// Variables which will be updated in GameLogic()
 		glm::mat4 ViewPrj;
 		glm::mat4 WM;
 		glm::vec3 ViewPosition;
 		float dollAngle;
 		
+		// Running the game logic and updating the variables
 		GameLogic(this, Ar, ViewPrj, WM, ViewPosition, dollAngle);
 		
+		// Finding the rotation for the DOLL
 		glm::quat dollRotationQuaternion = glm::quat(glm::vec3(0, -dollAngle+glm::radians(90.0f), 0));
 
 		UniformBufferObject ubo{};								
 		// Here is where you actually update your uniforms
 
-		// updates global uniforms
+		// updates GLOBAL UBO
 		GlobalUniformBufferObject gubo{};
 		gubo.lightPosition = glm::vec3(100.0f, 100.0f, 100.0f);
 		gubo.lightColor = glm::vec4(0.5f, 0.5f, 1.0f, 1.0f);
 		gubo.eyePos = ViewPosition;
-		/* Leo addition */
 		gubo.lightDirDoll = glm::vec3(cos(dollAngle), sin(glm::radians(-15.0f)), sin(dollAngle));
 		gubo.lightColorDoll = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
 		gubo.eyePosDoll = glm::vec3(0, 0.2, 0);
-		/* End Leo addition */
 
 		// CHARACTER UBO
 		ubo.mMat = WM * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0,1,0));
@@ -321,7 +306,8 @@ class Assignment07 : public BaseProject {
         ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
         DSRedLine.map(currentImage, &ubo, sizeof(ubo), 0);
         DSRedLine.map(currentImage, &gubo, sizeof(gubo), 2);
-            
+           
+		// GROUND UBO
 		for(int i = 0; i < 4; i++) {
 			ubo.mMat = GWM[i];
 			ubo.mvpMat = ViewPrj * ubo.mMat;

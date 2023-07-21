@@ -1,15 +1,14 @@
 
 void GameLogic(Assignment07* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, glm::vec3& ViewPosition, float& dollAngle) {
-	// The procedure must implement the game logic  to move the character in third person.
 	// Input:
-	// <Assignment07 *A> Pointer to the current assignment code. Required to read the input from the user
+	// <Assignment07 *A> Pointer to the project code. Required to read the input from the user
 	// <float Ar> Aspect ratio of the current window (for the Projection Matrix)
 	// Output:
 	// <glm::mat4 &ViewPrj> the view-projection matrix of the camera
 	// <glm::mat4 &World> the world matrix of the object
 	// Parameters
 	// Camera FOV-y, Near Plane and Far Plane
-	const float FOVy = glm::radians(45.0f);
+	const float FOVy = glm::radians(60.0f);
 	const float nearPlane = 0.1f;
 	const float farPlane = 100.f;
 
