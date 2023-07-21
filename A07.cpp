@@ -207,10 +207,15 @@ class Assignment07 : public BaseProject {
 		GWM[3] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(128)),glm::vec3(0,0,0));
         
 		// WALL world matrix
-        WWM[0] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(128)),glm::vec3(-1,0,-1));
-        WWM[1] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(128)),glm::vec3(0,0,-1));
-        WWM[2] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(128)),glm::vec3(-1,0,0));
-        WWM[3] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(128)),glm::vec3(0,0,0));
+        //right
+        WWM[0] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(-80, 10, 100)),glm::vec3(-0.2,0,0.3)) * glm::inverse(glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(1,0,0)));
+        //left
+        WWM[1] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(-80, 10, -100)),glm::vec3(-0.2,0,0.3)) * glm::inverse(glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(1,0,0)));
+        //front
+        WWM[2] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(-50, 10, 150)),glm::vec3(-0.2,0,-0.5)) * glm::inverse(glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0,0,-1)));
+        //back
+        WWM[3] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(-50, 10, 150)),glm::vec3(1.2,0,-0.5)) * glm::inverse(glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0,0,-1)));
+
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
@@ -432,6 +437,7 @@ class Assignment07 : public BaseProject {
 		DSRedLine.map(currentImage, &ubo, sizeof(ubo), 0);
 		DSRedLine.map(currentImage, &gubo, sizeof(gubo), 2);
 
+        // GROUND UBO
 		for (int i = 0; i < 4; i++) {
 			ubo.mMat = GWM[i];
 			ubo.mvpMat = ViewPrj * ubo.mMat;
@@ -440,7 +446,6 @@ class Assignment07 : public BaseProject {
 			DSG[i].map(currentImage, &gubo, sizeof(gubo), 2);
 		}
 		// WALL UBO
-			//POSITION OF WALLS ?????
 		for (int i = 0; i < 4; i++) {
 			ubo.mMat = WWM[i];
 			ubo.mvpMat = ViewPrj * ubo.mMat;
@@ -448,6 +453,7 @@ class Assignment07 : public BaseProject {
 			DSW[i].map(currentImage, &ubo, sizeof(ubo), 0);
 			DSW[i].map(currentImage, &gubo, sizeof(gubo), 2);
 		}
+        
 		uboSplash.visible = (gameState == 0) ? 1.0f : 0.0f;
 		DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
 
