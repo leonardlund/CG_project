@@ -171,11 +171,13 @@ class Assignment07 : public BaseProject {
         TW[3].init(this, "textures/RedColor.jpeg");
 		
 
+		// GROUND World matrix
 		GWM[0] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(128)),glm::vec3(-1,0,-1));
 		GWM[1] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(128)),glm::vec3(0,0,-1));	
 		GWM[2] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(128)),glm::vec3(-1,0,0));	
 		GWM[3] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(128)),glm::vec3(0,0,0));
         
+		// WALL world matrix
         WWM[0] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(128)),glm::vec3(-1,0,-1));
         WWM[1] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(128)),glm::vec3(0,0,-1));
         WWM[2] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(128)),glm::vec3(-1,0,0));
@@ -187,24 +189,28 @@ class Assignment07 : public BaseProject {
 		// This creates a new pipeline (with the current surface), using its shaders
 		PMesh.create();
 
+		// PLAYER
 		DS1.init(this, &DSLMesh, {
 					{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
 					{1, TEXTURE, 0, &T1},
 					{2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
         });
         
+		// DOLL
         DS2.init(this, &DSLMesh, {
             {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
             {1, TEXTURE, 0, &T2},
             {2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
         });
-                 
+        
+		// FINISH LINE
         DSRedLine.init(this, &DSLMesh, {
                     {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
                     {1, TEXTURE, 0, &TRedLine},
                     {2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
         });
-            
+        
+		// GROUND
 		for(int i = 0; i < 4; i++) {
 			DSG[i].init(this, &DSLMesh, {
 					{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
@@ -212,7 +218,7 @@ class Assignment07 : public BaseProject {
 					{2, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
 				});
 		}
-        
+        // WALLS
         for(int i = 0; i < 4; i++) {
             DSW[i].init(this, &DSLMesh, {
                     {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
@@ -270,39 +276,38 @@ class Assignment07 : public BaseProject {
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
         
         PMesh.bind(commandBuffer);
+
+		// PLAYER
         M1.bind(commandBuffer);
-        
         DS1.bind(commandBuffer, PMesh, 0, currentImage);
-        
-        
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(M1.indices.size()), 1, 0, 0, 0);
         
-        /* Leo addition */
+        // DOLL
         M2.bind(commandBuffer);
         DS2.bind(commandBuffer, PMesh, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(M2.indices.size()), 1, 0, 0, 0);
-        /* End Leo addition*/
         
+		// FINISH LINE
         MRedLine.bind(commandBuffer);
         DSRedLine.bind(commandBuffer, PMesh, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MRedLine.indices.size()), 1, 0, 0, 0);
         
+		// GROUND
         MG.bind(commandBuffer);
         for(int i = 0; i < 4; i++) {
             DSG[i].bind(commandBuffer, PMesh, 0, currentImage);
             vkCmdDrawIndexed(commandBuffer,
                 static_cast<uint32_t>(MG.indices.size()), 1, 0, 0, 0);
         }
-        
+        // WALLS
         MW.bind(commandBuffer);
         for(int i = 0; i < 4; i++) {
             DSW[i].bind(commandBuffer, PMesh, 0, currentImage);
             vkCmdDrawIndexed(commandBuffer,
                 static_cast<uint32_t>(MW.indices.size()), 1, 0, 0, 0);
-                
         }
     }
         
@@ -313,14 +318,13 @@ class Assignment07 : public BaseProject {
                 glfwSetWindowShouldClose(window, GL_TRUE);
             }
             
+			// Variables which are updated in GameLogic()
             glm::mat4 ViewPrj;
             glm::mat4 WM;
             glm::vec3 ViewPosition;
             float dollAngle;
             
             GameLogic(this, Ar, ViewPrj, WM, ViewPosition, dollAngle);
-            
-            glm::quat dollRotationQuaternion = glm::quat(glm::vec3(0, -dollAngle+glm::radians(90.0f), 0));
             
             UniformBufferObject ubo{};
             // Here is where you actually update your uniforms
@@ -330,12 +334,10 @@ class Assignment07 : public BaseProject {
             gubo.lightPosition = glm::vec3(100.0f, 100.0f, 100.0f);
             gubo.lightColor = glm::vec4(0.5f, 0.5f, 1.0f, 1.0f);
             gubo.eyePos = ViewPosition;
-            
-            /* Leo addition */
+			glm::quat dollRotationQuaternion = glm::quat(glm::vec3(0, -dollAngle + glm::radians(90.0f), 0));
             gubo.lightDirDoll = glm::vec3(cos(dollAngle), sin(glm::radians(-15.0f)), sin(dollAngle));
             gubo.lightColorDoll = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
             gubo.eyePosDoll = glm::vec3(0, 0.2, 0);
-            /* End Leo addition */
             
             // CHARACTER UBO
             ubo.mMat = WM * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0,1,0));
@@ -358,6 +360,7 @@ class Assignment07 : public BaseProject {
             DSRedLine.map(currentImage, &ubo, sizeof(ubo), 0);
             DSRedLine.map(currentImage, &gubo, sizeof(gubo), 2);
             
+			// GROUND UBO
             for(int i = 0; i < 4; i++) {
                 ubo.mMat = GWM[i];
                 ubo.mvpMat = ViewPrj * ubo.mMat;
@@ -366,6 +369,7 @@ class Assignment07 : public BaseProject {
                 DSG[i].map(currentImage, &gubo, sizeof(gubo), 2);
             }
             
+			// WALL UBO
             //POSITION OF WALLS ?????
             for(int i = 0; i < 4; i++) {
                 ubo.mMat = WWM[i];
