@@ -124,6 +124,7 @@ void GameLogic(Project* A, float Ar, glm::mat4& ViewPrj, glm::mat4& World, glm::
 	wasFire = fire;
 	bool startPlaying = false;
 
+	
 	switch (gameState) {
 	case 0: // initial state - show splash screen
 		if (handleFire) {

@@ -202,15 +202,24 @@ class Project : public BaseProject {
 		GWM[3] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(128)),glm::vec3(0,0,0));
         
 		// WALL world matrix
-        //right
-        WWM[0] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(-80, 10, 100)),glm::vec3(-0.2,0,0.3)) * glm::inverse(glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(1,0,0)));
-        //left
-        WWM[1] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(-80, 10, -100)),glm::vec3(-0.2,0,0.3)) * glm::inverse(glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(1,0,0)));
-        //front
-        WWM[2] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(-50, 10, 150)),glm::vec3(-0.2,0,-0.5)) * glm::inverse(glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0,0,-1)));
-        //back
-        WWM[3] = glm::translate(glm::scale(glm::mat4(1),glm::vec3(-50, 10, 150)),glm::vec3(1.2,0,-0.5)) * glm::inverse(glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0,0,-1)));
+		glm::mat4 baseWallWorldMatrix = glm::scale(glm::mat4(1), glm::vec3(1, 20, 100))
+			* glm::translate(glm::mat4(1), glm::vec3(0, 1, -0.5f))
+			* glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0, 0, 1))
+			* glm::rotate(glm::mat4(1), glm::radians(270.0f), glm::vec3(0, 1, 0));
 
+		// front
+		WWM[0] = glm::translate(glm::mat4(1), glm::vec3(5, 0, 0)) * baseWallWorldMatrix;
+		// right
+		WWM[1] = glm::translate(glm::mat4(1), glm::vec3(-20, 0, 25))
+			* glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0, 1, 0))
+			* baseWallWorldMatrix;
+		// left
+		WWM[2] = glm::translate(glm::mat4(1), glm::vec3(-20, 0, -25))
+			* glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0, 1, 0))
+			* baseWallWorldMatrix;
+		// back
+		WWM[3] = glm::translate(glm::mat4(1), glm::vec3(-65, 0, 0)) * baseWallWorldMatrix;
+		
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
@@ -419,7 +428,7 @@ class Project : public BaseProject {
 		DSCharacter.map(currentImage, &gubo, sizeof(gubo), 2);
 
 		// DOLL UBO
-		ubo.mMat = glm::translate(glm::scale(glm::mat4(1), glm::vec3(1)), glm::vec3(0, 0, 0)) * glm::mat4(dollRotationQuaternion);
+		ubo.mMat = glm::translate(glm::scale(glm::mat4(1), glm::vec3(2)), glm::vec3(0, 0, 0)) * glm::mat4(dollRotationQuaternion);
 		ubo.mvpMat = ViewPrj * ubo.mMat;
 		ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
 		DSDoll.map(currentImage, &ubo, sizeof(ubo), 0);
